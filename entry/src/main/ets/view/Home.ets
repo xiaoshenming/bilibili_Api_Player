@@ -14,200 +14,201 @@ export struct Home {
     .width("100%")
     .borderRadius(12)
   }
+
   videoDatas:Array<VideoData> =[
     {
-      video:$rawfile('short_video1.mp4'),
-      name:'@山猫',
-      description:'海的那边，是.....',
-      time:'2024-01-24 12:32',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo33'),
-      likeCount:'1234',
-      commentCount:'1122',
-      favoriteCount:'445',
-      shareount:'3321',
-      hotsport:'海',
-      play:true,
-      index:0
     },
     {
-      video:$rawfile('short_video2.mp4'),
-      name:'@登山爱好者',
-      description:'#雪山',
-      time:'2022-04-24 12:12',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo35'),
-      likeCount:'1884',
-      commentCount:'1542',
-      favoriteCount:'4545',
-      shareount:'861',
-      hotsport:'雪的距离',
-      play:true,
-      index:1
     },
     {
-      video:$rawfile('short_video3.mp4'),
-      name:'@平平淡淡',
-      description:'生活不只是眼前的苟且，还有诗和远方',
-      time:'2023-08-20 10:45',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo37'),
-      likeCount:'777',
-      commentCount:'4576',
-      favoriteCount:'8896',
-      shareount:'1112',
-      hotsport:'日出',
-      play:true,
-      index:2
     },
     {
-      video:$rawfile('short_video1.mp4'),
-      name:'@山猫',
-      description:'海的那边，是.....',
-      time:'2024-01-24 12:32',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo33'),
-      likeCount:'1234',
-      commentCount:'1122',
-      favoriteCount:'445',
-      shareount:'3321',
-      hotsport:'海',
-      play:true,
-      index:3
     },
     {
-      video:$rawfile('short_video2.mp4'),
-      name:'@登山爱好者',
-      description:'#雪山',
-      time:'2022-04-24 12:12',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo35'),
-      likeCount:'1884',
-      commentCount:'1542',
-      favoriteCount:'4545',
-      shareount:'861',
-      hotsport:'雪的距离',
-      play:true,
-      index:4
     },
     {
-      video:$rawfile('short_video3.mp4'),
-      name:'@平平淡淡',
-      description:'生活不只是眼前的苟且，还有诗和远方',
-      time:'2023-08-20 10:45',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo37'),
-      likeCount:'777',
-      commentCount:'4576',
-      favoriteCount:'8896',
-      shareount:'1112',
-      hotsport:'日出',
-      play:true,
-      index:5
     },
     {
-      video:$rawfile('short_video1.mp4'),
-      name:'@山猫',
-      description:'海的那边，是.....',
-      time:'2024-01-24 12:32',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo33'),
-      likeCount:'1234',
-      commentCount:'1122',
-      favoriteCount:'445',
-      shareount:'3321',
-      hotsport:'海',
-      play:true,
-      index:6
     },
     {
-      video:$rawfile('short_video2.mp4'),
-      name:'@登山爱好者',
-      description:'#雪山',
-      time:'2022-04-24 12:12',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo35'),
-      likeCount:'1884',
-      commentCount:'1542',
-      favoriteCount:'4545',
-      shareount:'861',
-      hotsport:'雪的距离',
-      play:true,
-      index:7
     },
     {
-      video:$rawfile('short_video3.mp4'),
-      name:'@平平淡淡',
-      description:'生活不只是眼前的苟且，还有诗和远方',
-      time:'2023-08-20 10:45',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo37'),
-      likeCount:'777',
-      commentCount:'4576',
-      favoriteCount:'8896',
-      shareount:'1112',
-      hotsport:'日出',
-      play:true,
-      index:8
     },
     {
-      video:$rawfile('short_video1.mp4'),
-      name:'@山猫',
-      description:'海的那边，是.....',
-      time:'2024-01-24 12:32',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo33'),
-      likeCount:'1234',
-      commentCount:'1122',
-      favoriteCount:'445',
-      shareount:'3321',
-      hotsport:'海',
-      play:true,
-      index:9
     },
     {
-      video:$rawfile('short_video2.mp4'),
-      name:'@登山爱好者',
-      description:'#雪山',
-      time:'2022-04-24 12:12',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo35'),
-      likeCount:'1884',
-      commentCount:'1542',
-      favoriteCount:'4545',
-      shareount:'861',
-      hotsport:'雪的距离',
-      play:true,
-      index:10
     },
     {
-      video:$rawfile('short_video3.mp4'),
-      name:'@平平淡淡',
-      description:'生活不只是眼前的苟且，还有诗和远方',
-      time:'2023-08-20 10:45',
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
       controller:this.myController,
-      auto:true,
-      head:$r('app.media.photo37'),
-      likeCount:'777',
-      commentCount:'4576',
-      favoriteCount:'8896',
-      shareount:'1112',
-      hotsport:'日出',
-      play:true,
-      index:11
     },
-  ];
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+    {
+      description:'总得来看看雪山吧',//标题
+      head:$r('app.media.photo35'),//封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name:'@登山爱好者',//UP主
+      view:'114514',//播放量
+      barrage:'114514',//弹幕数
+      time:'511',//时长
+      controller:this.myController,
+    },
+
+  ]
+
   aboutToAppear(): void {
     //把数组VideoDatas中的元素加载进datas对象中
     for (let index = 0; index < this.videoDatas.length; index++) {
@@ -234,38 +235,52 @@ export struct Home {
             List({ space: 5 },) {
               LazyForEach(this.datas, (item: VideoData, index: number) => {
                 ListItem() {
-                  Column() {
+                  RelativeContainer() {
                     Image(item.head)
                       .width('100%')
-                      .aspectRatio(1)// 使封面图片为正方形
+                      .aspectRatio(0)// 为1使封面图片为正方形
                       .objectFit(ImageFit.Cover)
+                      .alignRules({
+                        top: { anchor: "__container__", align: VerticalAlign.Top },
+                        left: { anchor: "__container__", align: HorizontalAlign.Start }
+                      })
+                      .id("image1")
                       .onClick(() => {
                         // 点击封面时触发播放或跳转事件
                         console.log(`Clicked on video: ${item.name}`);
                       });
 
-                    Column() {
-                      Text(item.name)
-                        .fontSize(14)
-                        .fontWeight(FontWeight.Bold)
-                        // .padding({ top: 5, bottom: 2 });
-
                       Text(item.description)
+                        .fontSize(14)
+                        .padding({ top: 10,left:10,bottom:10})
+                        .fontWeight(FontWeight.Normal)
+                        .letterSpacing(2)
+                        .lineHeight(20)
+                        .alignRules({
+                          top: { anchor: "image1", align: VerticalAlign.Bottom },
+                          left: { anchor: "image1", align: HorizontalAlign.Start }
+                        })
+
+
+                      Text(item.name)
                         .fontSize(12)
-                        // .padding({ bottom: 5 });
-                    }
-                    // .padding({ top: 5 })
+                        .letterSpacing(2)
+                        .fontColor(Color.Gray)
+                        .fontWeight(FontWeight.Normal)
+                        .padding({left:10,bottom:10,top:10})
+                        .alignRules({
+                          bottom: { anchor: "__container__", align: VerticalAlign.Bottom },
+                          left: { anchor: "__container__", align: HorizontalAlign.Start }
+                        })
                   }
                   .borderRadius(5)
                   .width('100%')
-                  .height(250)
-                  // .height('100%')
+                  .height(225)
                   .backgroundColor('#ffffff') // 可选：背景颜色
-                  // .padding(5);
+
                 }
                 .borderRadius(5)
-                // .padding({left:5,right:5})
-                .height(250)
+                .height(225)
               });
             }
 

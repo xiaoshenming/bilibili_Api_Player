@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.cer",
+          "storePassword": "0000001A08E416A0A5E3BFD57BD16F7473BD86B4B526800ACB1E3E74E504C62DF0E957BF7DBE6B878F13",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001ADA0216ED8CF3587A0D1CCB8FA47D8B4F133F86D5D6A6ED492B392C11634362A6932336AF54E8",
+          "profile": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.p12"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
