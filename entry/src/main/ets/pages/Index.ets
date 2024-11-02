@@ -15,6 +15,7 @@
 
 
 import { Home } from '../view/Home';
+import { test6 } from '../view/test6';
 import { Dynamic } from '../view/Dynamic';
 import { Add } from '../view/Add';
 import { Vipshopping } from '../view/Vipshopping';
@@ -63,7 +64,8 @@ struct Index {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.End, justifyContent: FlexAlign.End }) {
       Tabs({ barPosition: BarPosition.End, index: this.bottomTabIndex, controller: this.controller }) {
         TabContent() {
-          Home()
+          // Home()
+          test6()
         }.tabBar(this.TabBuilder(0, 'Home'))
 
         TabContent() {
