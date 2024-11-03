@@ -43,6 +43,7 @@ export struct test7 {
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+
         this.datas.pushData({
           description: item["title"], // 标题
           head: item["pic"], // 封面URL
@@ -52,6 +53,8 @@ export struct test7 {
           barrage: item["stat"]["danmaku"], // 弹幕数
           time: item["duration"], // 时长
           controller: this.myController,
+
+
         });
       }
     } else {
@@ -129,15 +132,9 @@ export struct test7 {
                   }
                   .onClick(() => {
                     //点击之后跳转到Videoplay
-                    console.log(`Clicked on video: ${item.name}`);
-
-                    // 跳转到 VideoPlayer 页面，并传递视频数据
-                    router.push({
-                      url: 'pages/VideoPlayer', // 目标页面
-                      params: {
-                        videoData: item // 将当前视频信息作为参数传递
-                      }
-                    });
+                    console.log(`视频名称: ${item.description}`);
+                    console.log(`地址: ${item.head}`);
+                    router.pushUrl({ url: "pages/VideoPlayer", params: { videoDatas: [item] } });
                   })
                   .borderRadius(5)
                   .width('100%')

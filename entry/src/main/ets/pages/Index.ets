@@ -81,9 +81,9 @@ struct Index {
         }.tabBar(this.TabBuilder(3, 'Vipshopping'))
         TabContent() {
           // Mine()
-          // VideoPlayer()
+          VideoPlayer()
           // test5()
-          test4()
+          // test4()
         }.tabBar(this.TabBuilder(4, 'Mine'))
       }
       .width('100%')
