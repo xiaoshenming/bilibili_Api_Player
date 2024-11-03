@@ -2,14 +2,15 @@ import { MyDataSource } from '../Model/MyDataSource';
 import { VideoData } from '../Model/VideoData';
 import { requestSelf } from '../api/bliblihome'; // 确保路径正确
 import http from '@ohos.net.http';
-
+import { promptAction, router } from '@kit.ArkUI';
 @Entry
 @Component
-export struct test6 {
+export struct test7 {
   private myController: VideoController = new VideoController();
   private datas: MyDataSource = new MyDataSource();
   @State index: number = 0;
   @State apiResponse: object = []; // 存储原始 API 响应
+  @State loadingMore: boolean = false; // 用于指示是否正在加载更多数据
 
   @Styles
   listCard() {
@@ -20,6 +21,11 @@ export struct test6 {
   }
 
   async aboutToAppear() {
+    await this.loadData(); // 加载初始数据
+  }
+
+  // 加载数据的公共方法
+  private async loadData() {
     const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
     const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
 
@@ -33,9 +39,7 @@ export struct test6 {
 
   private parseApiResponse(response: object) {
     if (response["code"] === 0 && response["data"]["item"]) {
-      // const items = JSON.stringify(response["data"]["item"]);
       const items:Array<string> = response["data"]["item"];
-      // this.datas.clear(); // 清空旧数据
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -55,6 +59,16 @@ export struct test6 {
     }
   }
 
+  // 列表到底部时触发
+  private async onReachEnd() {
+    if (this.loadingMore) return; // 避免重复加载
+    this.loadingMore = true; // 设置为加载中
+
+    await this.loadData(); // 重新加载数据
+
+    this.loadingMore = false; // 重置加载状态
+  }
+
   onPageShow(): void {
     this.datas.getData(this.index).controller.start();
   }
@@ -70,7 +84,7 @@ export struct test6 {
           .width("100%")
           .height("10%")
           .backgroundColor('#0080DC')
-          .textAlign(TextAlign.Center)
+          .textAlign(TextAlign.Center);
         Tabs({ barPosition: BarPosition.Start }) {
           TabContent() {
             List({ space: 5 }) {
@@ -87,9 +101,7 @@ export struct test6 {
                         left: { anchor: "__container__", align: HorizontalAlign.Start }
                       })
                       .id("image1")
-                      .onClick(() => {
-                        console.log(`Clicked on video: ${item.name}`);
-                      });
+
 
                     Text(item.description)
                       .fontSize(14)
@@ -115,6 +127,18 @@ export struct test6 {
                         left: { anchor: "__container__", align: HorizontalAlign.Start }
                       });
                   }
+                  .onClick(() => {
+                    //点击之后跳转到Videoplay
+                    console.log(`Clicked on video: ${item.name}`);
+
+                    // 跳转到 VideoPlayer 页面，并传递视频数据
+                    router.push({
+                      url: 'pages/VideoPlayer', // 目标页面
+                      params: {
+                        videoData: item // 将当前视频信息作为参数传递
+                      }
+                    });
+                  })
                   .borderRadius(5)
                   .width('100%')
                   .height(225)
@@ -124,18 +148,23 @@ export struct test6 {
                 .height(225);
               });
             }
+            .onReachEnd(() => {
+              this.onReachEnd()
+              console.log('触底')
+            })
             .cachedCount(6)
             .lanes(2, 5)
             .width("100%")
             .edgeEffect(EdgeEffect.Spring)
+            // .edgeEffect(EdgeEffect.None)//听说可以防止反弹二次触发
             .nestedScroll({
               scrollForward: NestedScrollMode.PARENT_FIRST,
               scrollBackward: NestedScrollMode.SELF_FIRST
             });
-          }.tabBar("Tab1")
+          }.tabBar("Tab1");
 
           TabContent() {
-          }.tabBar("Tab2")
+          }.tabBar("Tab2");
         }
         .padding({ left: 5, right: 5 })
         .vertical(false)

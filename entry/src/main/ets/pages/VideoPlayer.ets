@@ -2,45 +2,49 @@
 import { it } from '@ohos/hypium';
 import { MyDataSource } from '../Model/MyDataSource';
 import { VideoData } from '../Model/VideoData';
-
-// @Entry
+// import { Param } from '@ohos/hypium';
+@Entry
 @Component
 export struct VideoPlayer {
   private myController:VideoController =new VideoController();
   private datas:MyDataSource =new MyDataSource();
   @State index:number =0;
-  videoDatas:Array<VideoData> =[
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-  ];
+  // videoDatas:Array<VideoData> =[
+  //   {
+  //     description:'总得来看看雪山吧',//标题
+  //     head:$r('app.media.photo35'),//封面URL
+  //     video:$rawfile('short_video2.mp4'),//视频链接
+  //     name:'@登山爱好者',//UP主
+  //     view:'114514',//播放量
+  //     barrage:'114514',//弹幕数
+  //     time:'511',//时长
+  //     controller:this.myController,
+  //   },
+  //   {
+  //     description:'总得来看看雪山吧',//标题
+  //     head:$r('app.media.photo35'),//封面URL
+  //     video:$rawfile('short_video2.mp4'),//视频链接
+  //     name:'@登山爱好者',//UP主
+  //     view:'114514',//播放量
+  //     barrage:'114514',//弹幕数
+  //     time:'511',//时长
+  //     controller:this.myController,
+  //   },
+  //   {
+  //     description:'总得来看看雪山吧',//标题
+  //     head:$r('app.media.photo35'),//封面URL
+  //     video:$rawfile('short_video2.mp4'),//视频链接
+  //     name:'@登山爱好者',//UP主
+  //     view:'114514',//播放量
+  //     barrage:'114514',//弹幕数
+  //     time:'511',//时长
+  //     controller:this.myController,
+  //   },
+  // ];
+
+  videoDatas:Array<VideoData> =[];
+  // 接收传递过来的参数
+  // @Param videoData: VideoData;
   aboutToAppear(): void {
     //把数组VideoDatas中的元素加载进datas对象中
     for (let index = 0; index < this.videoDatas.length; index++) {
@@ -64,9 +68,6 @@ export struct VideoPlayer {
       //   .autoPlay(true)
 
       Swiper(){
-
-
-
         LazyForEach(this.datas,(item:VideoData,index:number)=>{
           //加载元素
           Video({
