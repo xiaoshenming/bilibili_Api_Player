@@ -15,7 +15,7 @@
 
 
 import { Home } from '../view/Home';
-import { test6 } from '../view/test6';
+// import { test6 } from '../view/test6';
 import { test7 } from '../view/test7';
 import { Dynamic } from '../view/Dynamic';
 import { Add } from '../view/Add';
@@ -70,7 +70,7 @@ struct Index {
 
         TabContent() {
           // Dynamic()
-          test6()
+          // test6()
         }.tabBar(this.TabBuilder(1, 'Dynamic'))
         TabContent() {
           Add()

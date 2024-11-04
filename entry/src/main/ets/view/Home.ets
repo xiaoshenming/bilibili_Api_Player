@@ -28,7 +28,7 @@ export struct Home {
     },
     {
       description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
+      head:'http://10.3.36.9:4567/download/logo.png',//封面URL
       video:$rawfile('short_video2.mp4'),//视频链接
       name:'@登山爱好者',//UP主
       view:'114514',//播放量
@@ -38,7 +38,7 @@ export struct Home {
     },
     {
       description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
+      head:'http://10.3.36.9:4567/download/logo.png',//封面URL
       video:$rawfile('short_video2.mp4'),//视频链接
       name:'@登山爱好者',//UP主
       view:'114514',//播放量
@@ -46,167 +46,6 @@ export struct Home {
       time:'511',//时长
       controller:this.myController,
     },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:$r('app.media.photo35'),//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-    },
-
   ]
 
   aboutToAppear(): void {

@@ -3,6 +3,7 @@ import { VideoData } from '../Model/VideoData';
 // import { Param } from '@ohos/hypium';
 import { router } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
+import { xmapi } from '../api/xmapi'; // 确保路径正确
 @Entry
 @Component
 export struct VideoPlayer {
@@ -14,7 +15,17 @@ export struct VideoPlayer {
     {
       description: '总得来看看雪山吧', //标题
       head: $r('app.media.photo35'), //封面URL
-      video: $rawfile('short_video2.mp4'), //视频链接
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name: '@登山爱好者', //UP主
+      view: '114514', //播放量
+      barrage: '114514', //弹幕数
+      time: '511', //时长
+      controller: this.myController,
+    },
+    {
+      description: '总得来看看雪山吧', //标题
+      head: 'http://i2.hdslb.com/bfs/archive/c4603188a8d0caa468649820dbd5750612095236.jpg', //封面URL
+      video:'http://10.3.36.9:4567/download/bbb.mp4',//视频链接
       name: '@登山爱好者', //UP主
       view: '114514', //播放量
       barrage: '114514', //弹幕数
@@ -24,41 +35,28 @@ export struct VideoPlayer {
     {
       description: '总得来看看雪山吧', //标题
       head: $r('app.media.photo35'), //封面URL
-      video: 'http://10.3.36.9:4567/download/5b56fb85b44d46f99034cda0da35c025.mp4', //视频链接
-      // video: 'https://www.gcc.edu.cn/videos/2024-05/5b56fb85b44d46f99034cda0da35c025.mp4', //视频链接
+      // video:'https://www.gcc.edu.cn/videos/2024-05/5b56fb85b44d46f99034cda0da35c025.mp4',//视频链接
+      // video:'https://act-webstatic.mihoyo.com/puzzle/hk4e/pz_YvJfNJEi5F/resource/puzzle/2024/09/23/94927edf50261e3c1146f0d44db68b3f_8829009084590888673.mp4',//视频链接
+      // video:'https://webstatic.mihoyo.com/upload/op-public/2020/09/27/fd431739ff26ceeb3010ac561d68446b_345688670889091949.mp4',//视频链接
+      // video:'http://10.3.36.9:4567/download/bbb.mp4',//视频链接
+      video:'http://10.3.36.9:7894/BV1kpSmYTEoy.mp4',//视频链接
+      // video:'http://127.0.0.1:7894/fd431739ff26ceeb3010ac561d68446b_345688670889091949.mp4',//视频链接
       name: '@登山爱好者', //UP主
       view: '114514', //播放量
       barrage: '114514', //弹幕数
       time: '511', //时长
       controller: this.myController,
     },
-    {
-      description: '总得来看看雪山吧', //标题
-      head: $r('app.media.photo35'), //封面URL
-      video: 'https://upos-hz-mirrorakam.akamaized.net/upgcxcode/59/58/1387295859/1387295859-1-30080.m4s?e=ig8euxZM2rNcNbdlhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&uipk=5&nbs=1&deadline=1730672492&gen=playurlv2&os=akam&oi=794498420&trid=e12da668470043518da4d6bc8a801ed9T&mid=2102334115&platform=html5&og=08&upsig=6698037905cc5d96cf99a2daaa8593f2&uparams=e,uipk,nbs,deadline,gen,os,oi,trid,mid,platform,og&hdnts=exp=1730665292~hmac=56393159702e1a1b3c85692985a76f43fe5274844e049226742f5d8fb981a505&bvc=vod&nettype=0&bw=331036&orderid=0,2&buvid=&build=0&mobi_app=&f=T_0_0&logo=80000000', //视频链接
-      name: '@登山爱好者', //UP主
-      view: '114514', //播放量
-      barrage: '114514', //弹幕数
-      time: '511', //时长
-      controller: this.myController,
-    },
-    {
-      description: '总得来看看雪山吧', //标题
-      head: $r('app.media.photo35'), //封面URL
-      video: 'https://upos-hz-mirrorakam.akamaized.net/upgcxcode/59/58/1387295859/1387295859-1-30232.m4s?e=ig8euxZM2rNcNbdlhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&uipk=5&nbs=1&deadline=1730672492&gen=playurlv2&os=akam&oi=794498420&trid=e12da668470043518da4d6bc8a801ed9T&mid=2102334115&platform=html5&og=cos&upsig=436d0da7dc5b44ff83dab5429e7cdc28&uparams=e,uipk,nbs,deadline,gen,os,oi,trid,mid,platform,og&hdnts=exp=1730665292~hmac=9a4c1f26969bbf6b0bcb7514f5ce7f7b659cc5abf10391eb5e873c6b05f1ffe1&bvc=vod&nettype=0&bw=12331&orderid=0,2&buvid=&build=0&mobi_app=&f=T_0_0&logo=80000000', //视频链接
-      name: '@登山爱好者', //UP主
-      view: '114514', //播放量
-      barrage: '114514', //弹幕数
-      time: '511', //时长
-      controller: this.myController,
-    },
+
   ];
 
-  // videoDatas:Array<VideoData> =[];
+  async aboutToAppear() {
 
-  // 接收传递过来的参数
-  // @Param videoData: VideoData;
-  aboutToAppear(): void {
+
+    let blibliurl=''; // 替换成实际的 SESSDATA
+    let mp4='';
+
+
     //把数组VideoDatas中的元素加载进datas对象中
     for (let index = 0; index < this.videoDatas.length; index++) {
       this.datas.pushData(this.videoDatas[index]);
@@ -68,28 +66,46 @@ export struct VideoPlayer {
     console.info(JSON.stringify(params["videoDatas"]));
     console.info(JSON.stringify(params["videoDatas"][0]["description"]));
 
-    const items: Array<string> = params["videoDatas"];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      console.info(item["description"]);
-      console.info(item["head"]);
-      console.info(item["video"]);
-      console.info(item["name"]);
-      console.info(item["view"]);
-      console.info(item["barrage"]);
-      console.info(item["time"]);
-      this.datas.pushData({
-        description: item["description"], // 标题
-        head: item["head"], // 封面URL
-        video: item["video"], // 视频链接
-        name: item["name"], // UP主
-        view: item["view"], // 播放量
-        barrage: item["barrage"], // 弹幕数
-        time: item["time"], // 时长
-        controller: this.myController,
-      });
+    // blibliurl=params["videoDatas"][0]["videom4s"]
+    blibliurl='https://www.bilibili.com/video/BV1kpSmYTEoy';
+    console.info('地址获取'+blibliurl)
+    const response = await xmapi(blibliurl);
+    if (response) {
+      console.info(JSON.stringify(response));
+      mp4=response["downloadLink"]
+    } else {
+      console.error('请求失败');
     }
+
+
+
+    const items: Array<string> = params["videoDatas"];
+    const item = items[0];
+
+    console.info(item["description"]);
+    console.info(item["head"]);
+    console.info(item["video"]);
+    console.info(item["name"]);
+    console.info(item["view"]);
+    console.info(item["barrage"]);
+    console.info(item["time"]);
+
+
+
+
+
+
+    this.datas.pushData({
+      description: item["description"], // 标题
+      head: item["head"], // 封面URL
+      video:mp4, // 视频链接
+      name: item["name"], // UP主
+      view: item["view"], // 播放量
+      barrage: item["barrage"], // 弹幕数
+      time: item["time"], // 时长
+      controller: this.myController,
+    });
+
 
   }
 
@@ -103,7 +119,7 @@ export struct VideoPlayer {
   build() {
     Column(){
       // Video({
-      //   src:'https://www.gcc.edu.cn/videos/2024-05/5b56fb85b44d46f99034cda0da35c025.mp4',
+      //   src:'http://10.3.36.9:4567/download/BV1kpSmYTEoy.mp4',
       //   controller:this.myController
       // })
       //   .objectFit(ImageFit.Contain)
@@ -112,23 +128,21 @@ export struct VideoPlayer {
       Swiper(){
         LazyForEach(this.datas,(item:VideoData,index:number)=>{
           //加载元素
+          // VideoController(){
+          //
+          //
+          // }
+
+
+          // Text(item.videom4s+'\r\n'+item.videom4a)
+
           Video({
             src: item.video,
-            controller: item.controller
+            controller: this.myController, // 同样使用同一个控制器
+            previewUri:item.head,
           })
             .autoPlay(true)
             .objectFit(ImageFit.Contain)
-          // if (item.video.toString().startsWith("https") && !item.video.toString().endsWith(".mp4")) {
-          //   Web({ src: item.video, controller: this.controller })
-          //     .enableNativeMediaPlayer({ enable: true, shouldOverlay: false })
-          // } else {
-          //   Video({
-          //     src: item.video,
-          //     controller: item.controller
-          //   })
-          //     .autoPlay(true)
-          //     .objectFit(ImageFit.Contain)
-          // }
         },(item:VideoData)=>JSON.stringify(item))
       }
       .width('100%')
