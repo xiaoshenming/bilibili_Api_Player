@@ -20,40 +20,21 @@ export struct Home {
       description:'总得来看看雪山吧',//标题
       head:$r('app.media.photo35'),//封面URL
       video:$rawfile('short_video2.mp4'),//视频链接
+      bvid:'BV1kpSmYTEoy',
       name:'@登山爱好者',//UP主
+      face:'aaa',
       view:'114514',//播放量
+      like:'1111',
       barrage:'114514',//弹幕数
       time:'511',//时长
+      pubdate:'1111',
+      coins: '5555',//投币
+      favorites: '5555',//收藏
+      shares: '5555',//转发
       controller:this.myController,
       auto:true,
       play:true,
       index:0,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:'http://10.3.36.9:4567/download/logo.png',//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-      auto:true,
-      play:true,
-      index:1,
-    },
-    {
-      description:'总得来看看雪山吧',//标题
-      head:'http://10.3.36.9:4567/download/logo.png',//封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      name:'@登山爱好者',//UP主
-      view:'114514',//播放量
-      barrage:'114514',//弹幕数
-      time:'511',//时长
-      controller:this.myController,
-      auto:true,
-      play:true,
-      index:2,
     },
   ]
 

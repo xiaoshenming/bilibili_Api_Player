@@ -56,6 +56,7 @@ export struct test7 {
   }
 
   private parseApiResponse(response: object) {
+    console.info(JSON.stringify(response));
     if (response["code"] === 0 && response["data"]["item"]) {
       const items:Array<string> = response["data"]["item"];
 
@@ -66,10 +67,17 @@ export struct test7 {
           description: item["title"], // 标题
           head: item["pic"], // 封面URL
           video: item["uri"], // 视频链接
+          bvid:item["bvid"],//地址
           name: item["owner"]["name"], // UP主
+          face:item["owner"]["face"],
           view: item["stat"]["view"], // 播放量
+          like:item["stat"]["like"],//点赞
           barrage: item["stat"]["danmaku"], // 弹幕数
           time: item["duration"], // 时长
+          pubdate:item["pubdate"],//发布时间
+          coins: '5555',//投币
+          favorites: '5555',//收藏
+          shares: '5555',//转发
           controller: this.myController,
           auto:true,
           play:true,

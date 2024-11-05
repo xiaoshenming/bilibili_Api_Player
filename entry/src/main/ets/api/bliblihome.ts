@@ -35,12 +35,7 @@ export const requestSelf = async (sessdata: string, method: http.RequestMethod, 
     );
 
     if (response.responseCode === 200) {
-     // console.log('返回的信息:', JSON.stringify(response.result))
-     //  let a=JSON.parse(response.result);
-     //  console.info('返回的信息:',JSON.stringify((a as object)?.["data"]["item"][1]))
-     //  return response.result;
       return JSON.parse(response.result);
-     //  return JSON.stringify(response.result);
     } else {
       console.log('请求失败:', response.responseCode);
       return null;

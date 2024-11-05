@@ -17,10 +17,10 @@ import { CommonConstants as Const } from '../common/CommonConstants';
 
 @Component
 export struct Side {
-  @State likeCount: string = '';
-  @State commentCount: string = '';
-  @State favoriteCount: string = '';
-  @State shareCount: string = '';
+  @State likeCount: string = '123';
+  @State commentCount: string = '123';
+  @State favoriteCount: string = '123';
+  @State shareCount: string = '123';
   @State isLike: boolean = false;
   @State isFavorite: boolean = true;
   @State index: number = 0;
@@ -95,6 +95,7 @@ export struct Side {
       }.width(Const.COLUMN_WIDTH)
       .height($r('app.integer.all_fabulous_height'))
 
+
       Column() {
         Image($r('app.media.new_icon'))
           .height($r('app.integer.fabulous_height'))
@@ -143,7 +144,8 @@ export struct Side {
           .height($r('app.integer.share_height'))
           .width($r('app.integer.share_height'))
           .objectFit(ImageFit.ScaleDown)
-        Text($r('app.string.share'))
+            // Text($r('app.string.share'))
+        Text(this.shareCount)
           .fontSize($r('app.integer.fabulous_font_size'))
           .fontColor(Color.White)
           .opacity($r('app.float.fabulous_opacity'))
@@ -159,8 +161,10 @@ export struct Side {
 
 @Component
 export struct VideoDes {
-  @State head: Resource = $r('app.media.app_icon');
+  @State head: Resource|string = $r('app.media.app_icon');
   @State name: string = '';
+  @State view: string = '';
+  @State barrage: string = '';
   @State description: string = '';
   @State hotspot: string = '';
   @State time: string = '';
