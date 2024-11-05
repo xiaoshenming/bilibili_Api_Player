@@ -50,7 +50,7 @@
     },
     {
       "name": "concern_size",
-      "value": 20
+      "value": 50
     },
     {
       "name": "concern_border_radius",
@@ -58,7 +58,7 @@
     },
     {
       "name": "concern_margin_bottom",
-      "value": -8
+      "value": 8
     },
     {
       "name": "concern_height",

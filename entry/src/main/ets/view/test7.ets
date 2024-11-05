@@ -3,6 +3,24 @@ import { VideoData } from '../Model/VideoData';
 import { requestSelf } from '../api/bliblihome'; // 确保路径正确
 import http from '@ohos.net.http';
 import { promptAction, router } from '@kit.ArkUI';
+
+
+
+/*
+ *
+ * 1. top: { anchor: "row3", align: VerticalAlign.Bottom }
+anchor: "row3"：这个参数指明了当前组件的上边缘将与名为 row3 的组件对齐。
+align: VerticalAlign.Bottom：当前组件的上边缘将对齐到 row3 的底部。也就是说，当前组件的顶部将位于 row3 的底部位置。
+2. bottom: { anchor: "__container__", align: VerticalAlign.Bottom }
+anchor: "__container__"：这里使用了 __container__ 作为锚点，表示当前组件的底部将与其父容器的底部对齐。
+align: VerticalAlign.Bottom：当前组件的底部将对齐到容器的底部边缘。
+3. left: { anchor: "__container__", align: HorizontalAlign.Start }
+anchor: "__container__"：当前组件的左边缘将与父容器的左边缘对齐。
+align: HorizontalAlign.Start：这表示当前组件的左边缘将对齐到容器的左侧开始位置。
+4. right: { anchor: "row1", align: HorizontalAlign.End }
+anchor: "row1"：当前组件的右边缘将与名为 row1 的组件对齐。
+align: HorizontalAlign.End：这表示当前组件的右边缘将对齐到 row1 的右边缘。
+* */
 @Entry
 @Component
 export struct test7 {

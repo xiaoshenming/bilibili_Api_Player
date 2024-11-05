@@ -17,12 +17,10 @@ import { CommonConstants as Const } from '../common/CommonConstants';
 
 @Component
 export struct Side {
-  @State head: Resource = $r('app.media.app_icon');
   @State likeCount: string = '';
   @State commentCount: string = '';
   @State favoriteCount: string = '';
   @State shareCount: string = '';
-  @State isFocus: boolean = true;
   @State isLike: boolean = false;
   @State isFavorite: boolean = true;
   @State index: number = 0;
@@ -63,43 +61,7 @@ export struct Side {
 
   build() {
     Column() {
-      Stack({ alignContent: Alignment.Bottom }) {
-        Image(this.head)
-          .width($r('app.integer.avatar_size'))
-          .height($r('app.integer.avatar_size'))
-          .borderRadius($r('app.float.avatar_borderRadius'))
-          .border({
-            width: 1,
-            color: Color.White
-          })
-        if (this.isFocus) {
-          Image($r('app.media.img'))
-            .width($r('app.integer.concern_size'))
-            .height($r('app.integer.concern_size'))
-            .borderRadius($r('app.integer.concern_border_radius'))
-            .margin({ bottom: $r('app.integer.concern_margin_bottom') })
-            .onClick(() => {
-              animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
-                this.isFocus = !this.isFocus;
-              })
-            })
-        }
-        if (!this.isFocus) {
-          Image($r('app.media.follow1'))
-            .width($r('app.integer.concern_size'))
-            .height($r('app.integer.concern_size'))
-            .borderRadius($r('app.integer.concern_border_radius'))
-            .margin({ bottom: $r('app.integer.concern_margin_bottom') })
-            .onClick(() => {
-              animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
-                this.isFocus = !this.isFocus;
-              })
-            })
-        }
-      }
-      .width(Const.FULL_SIZE)
-      .height($r('app.integer.avatar_height'))
-      .padding({ bottom: $r('app.integer.avatar_padding_bottom') })
+
 
       Column() {
         if (!this.isLike) {
@@ -197,18 +159,89 @@ export struct Side {
 
 @Component
 export struct VideoDes {
+  @State head: Resource = $r('app.media.app_icon');
   @State name: string = '';
   @State description: string = '';
   @State hotspot: string = '';
   @State time: string = '';
-
+  @State isFocus: boolean = true;
   build() {
     Column() {
-      Text(this.name)
-        .fontSize($r('app.integer.name_font_size'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.White)
-        .margin({ bottom: $r('app.integer.name_margin_bottom') })
+
+      Stack({ alignContent: Alignment.Bottom }) {
+        RelativeContainer() {
+          Image(this.head)
+            .width($r('app.integer.avatar_size'))
+            .height($r('app.integer.avatar_size'))
+            .borderRadius($r('app.float.avatar_borderRadius'))
+            .border({
+              width: 1,
+              color: Color.White
+            })
+            .alignRules({
+              top: { anchor: "__container__", align: VerticalAlign.Top },
+              left: { anchor: "__container__", align: HorizontalAlign.Start }
+            })
+            .id('head')
+
+          Text(this.name)
+            .fontSize($r('app.integer.name_font_size'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+            .margin({ bottom: $r('app.integer.name_margin_bottom') ,top:12})
+            .alignRules({
+              top: { anchor: "__container__", align: VerticalAlign.Top },
+              left: { anchor: "head", align: HorizontalAlign.End }
+            })
+            .id('name')
+
+          if (this.isFocus) {
+            // Image($r('app.media.img'))
+            Text('+关注')
+              .width(50)
+              .height(20)
+              .borderRadius(5)
+              .backgroundColor('#f75a9c')
+              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12})
+              .onClick(() => {
+                animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
+                  this.isFocus = !this.isFocus;
+                })
+              })
+              .alignRules({
+                top: { anchor: "__container__", align: VerticalAlign.Top },
+                left: { anchor: "name", align: HorizontalAlign.End }
+              })
+              .id('isFocus')
+          }
+          if (!this.isFocus) {
+            // Image($r('app.media.follow1'))
+            Text('取消关注')
+              .width(50)
+              .height(20)
+              .borderRadius(5)
+              .backgroundColor('#f75a9c')
+              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12})
+              .onClick(() => {
+                animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
+                  this.isFocus = !this.isFocus;
+                })
+              })
+              .alignRules({
+                top: { anchor: "__container__", align: VerticalAlign.Top },
+                left: { anchor: "name", align: HorizontalAlign.End }
+              })
+              .id('isFocus')
+          }
+        }
+      }
+      // .width(Const.FULL_SIZE)
+      .height($r('app.integer.avatar_height'))
+      .padding({ bottom: $r('app.integer.avatar_padding_bottom') })
+
+
+
+
 
       Text(this.description)
         .fontSize($r('app.integer.new_font_size'))
@@ -217,11 +250,7 @@ export struct VideoDes {
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-      Row() {
-        Text(this.time)
-          .fontSize($r('app.integer.time_font_size'))
-          .fontColor($r('app.color.time_color'))
-      }
+
     }
     .padding({ left: $r('app.integer.name_padding_left') })
     .alignItems(HorizontalAlign.Start)

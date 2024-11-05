@@ -5,7 +5,7 @@ import { VideoData } from '../Model/VideoData';
 import { router,curves } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
 import { xmapi } from '../api/xmapi'; // 确保路径正确
-import { Side } from '../view/Side';
+import { Side,VideoDes } from '../view/Side';
 let videoIndex: number = 0;
 @Entry
 @Component
@@ -140,7 +140,6 @@ export struct VideoPlayer {
                     }
                   })
                 Side({
-                  // head: item.head, // 封面
                   likeCount: '111', // 点赞数
                   commentCount: '111', // 评论数
                   favoriteCount: '111', // 收藏数
@@ -149,7 +148,64 @@ export struct VideoPlayer {
 
                 })
               }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding($r('app.integer.stack_padding'))
-            }}
+
+              VideoDes({ name: item.name, description: item.description, hotspot: '2024年11月5日17点17分', time: item.time })
+                .margin({ bottom: $r('app.integer.video_des_margin_bottom') })
+              // Row() {
+              //   Row() {
+              //     Image($r('app.media.ic_public_upgrade_filled'))
+              //       .height($r('app.integer.upgrade_icon_size'))
+              //       .width($r('app.integer.upgrade_icon_size'))
+              //     Text($r('app.string.upgrade_hot'))
+              //       .fontSize($r('app.integer.upgrade_text_font_size'))
+              //       .fontColor($r('app.color.up_color'))
+              //     Text(' · ' + '2024年11月5日17点17分')
+              //       .fontSize($r('app.integer.mus_font_size'))
+              //       .maxLines(1)
+              //       .width('2024年11月5日17点17分'.length * 12)
+              //       .fontColor(Color.White)
+              //       .height($r('app.integer.mus_height'))
+              //       .textOverflow({ overflow: TextOverflow.Ellipsis })
+              //       .layoutWeight(1)
+              //   }
+              //   .width(Const.ROW_WIDTH)
+              //
+              //   Row() {
+              //     Divider()
+              //       .vertical(true)
+              //       .color(Color.White)
+              //       .strokeWidth(1)
+              //       .height($r('app.integer.upgrade_text_font_size'))
+              //       .margin({ left: $r('app.integer.upgrade_margin'), right: $r('app.integer.upgrade_margin') })
+              //     Text($r('app.string.online_people'))
+              //       .fontSize($r('app.integer.mus_font_size'))
+              //       .fontColor(Color.White)
+              //     Image($r('app.media.ic_arrow_right'))
+              //       .width($r('app.integer.upgrade_text_font_size'))
+              //   }
+              //   .layoutWeight(1)
+              //   .justifyContent(FlexAlign.End)
+              // }
+              // .width(Const.FULL_SIZE)
+              // .height($r('app.integer.upgrade_height'))
+              // .backgroundColor(Color.Gray)
+              // .opacity($r('app.float.fabulous_opacity'))
+              // .padding({ left: $r('app.integer.upgrade_padding'), right: $r('app.integer.upgrade_padding') })
+              // .justifyContent(FlexAlign.Start)
+
+
+            }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding(0)
+            if (!this.playBoo) {
+              Image($r('app.media.pau'))
+                .height($r('app.integer.play_icon_size'))
+                .width($r('app.integer.play_icon_size'))
+                .onClick(() => {
+                  item.controller.start();
+                  item.play = true;
+                  this.playBoo = true;
+                })
+            }
+          }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding($r('app.integer.stack_padding'))
         },(item:VideoData)=>JSON.stringify(item))
       }
       .width('100%')
