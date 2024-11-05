@@ -19,6 +19,8 @@ export const xmapi = async (blibliurl: string): Promise<object | null> => {
       {
         header: headers,
         method: http.RequestMethod.GET,
+        connectTimeout: 120000,  // 设置较长的连接超时时间（例如 60 秒）
+        readTimeout: 300000     // 设置较长的读取超时时间（例如 300 秒）
       });
 
     if (response.responseCode === 200) {
