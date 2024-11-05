@@ -22,8 +22,8 @@ import { Add } from '../view/Add';
 import { Vipshopping } from '../view/Vipshopping';
 import { Mine } from '../view/Mine';
 import { VideoPlayer } from './VideoPlayer';
-import { test5 } from './test5';
-import { test4 } from './test4';
+// import { test5 } from './test5';
+// import { test4 } from './test4';
 import { CommonConstants as Const } from '../common/constants/CommonConstants';
 import { BottomTabsList } from '../viewmodel/BottomTabsModel';
 

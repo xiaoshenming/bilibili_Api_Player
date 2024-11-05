@@ -1,59 +1,108 @@
-import { requestSelf } from '../api/bliblihome'; // 确保路径正确
-import http from '@ohos.net.http';
-// 定义数据结构
-
+import { MyDataSource } from '../Model/MyDataSource';
+import { VideoData } from '../Model/VideoData';
+// import { Param } from '@ohos/hypium';
+import { router } from '@kit.ArkUI';
+import { webview } from '@kit.ArkWeb';
+import { xmapi } from '../api/xmapi'; // 确保路径正确
 @Entry
 @Component
-export struct test5 {
-  @State message: string = '测试';
-  @State apiResponse: object = []; // 存储原始 API 响应
+export struct VideoPlayer {
+  private myController:VideoController =new VideoController();
+  private datas:MyDataSource =new MyDataSource();
+  @State index:number =0;
+  controller: webview.WebviewController = new webview.WebviewController();
+  videoDatas: Array<VideoData> = [
+    {
+      description: '总得来看看雪山吧', //标题
+      head: $r('app.media.photo35'), //封面URL
+      video:$rawfile('short_video2.mp4'),//视频链接
+      name: '@登山爱好者', //UP主
+      view: '114514', //播放量
+      barrage: '114514', //弹幕数
+      time: '511', //时长
+      controller: this.myController,
+    },
+    {
+      description: '总得来看看雪山吧', //标题
+      head: 'http://i2.hdslb.com/bfs/archive/c4603188a8d0caa468649820dbd5750612095236.jpg', //封面URL
+      video:'http://10.3.36.9:4567/download/bbb.mp4',//视频链接
+      name: '@登山爱好者', //UP主
+      view: '114514', //播放量
+      barrage: '114514', //弹幕数
+      time: '511', //时长
+      controller: this.myController,
+    },
+  ];
+
   async aboutToAppear() {
-    const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
-    const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
+    let blibliurl=''; // 替换成实际的 SESSDATA
+    let mp4='';
+    //把数组VideoDatas中的元素加载进datas对象中
+    for (let index = 0; index < this.videoDatas.length; index++) {
+      this.datas.pushData(this.videoDatas[index]);
+    }
+    const params: object = router.getParams();
+    console.info(JSON.stringify(params));
+    console.info(JSON.stringify(params["videoDatas"]));
+    console.info(JSON.stringify(params["videoDatas"][0]["description"]));
 
+    blibliurl=params["videoDatas"][0]["video"]
+    // blibliurl='https://www.bilibili.com/video/BV1kpSmYTEoy';
+    console.info('地址获取'+blibliurl)
+    const response = await xmapi(blibliurl);
     if (response) {
-      this.apiResponse = response; // 存储原始响应结果
-      this.parseApiResponse(response); // 解析响应并存储视频数据
+      console.info(JSON.stringify(response));
+      mp4=response["downloadLink"]
+      console.info(JSON.stringify(response["downloadLink"]));
     } else {
-      this.apiResponse = ['请求失败'];
+      console.error('请求失败');
     }
+    const items: Array<string> = params["videoDatas"];
+    const item = items[0];
+    console.info(item["description"]);
+    console.info(item["head"]);
+    console.info(item["video"]);
+    console.info(item["name"]);
+    console.info(item["view"]);
+    console.info(item["barrage"]);
+    console.info(item["time"]);
+    this.datas.pushData({
+      description: item["description"], // 标题
+      head: item["head"], // 封面URL
+      video:mp4, // 视频链接
+      name: item["name"], // UP主
+      view: item["view"], // 播放量
+      barrage: item["barrage"], // 弹幕数
+      time: item["time"], // 时长
+      controller: this.myController,
+    });
   }
-  // 解析 API 响应
-  private parseApiResponse(response: object) {
-    console.info(JSON.stringify(response["data"]["item"][1]["id"]));
-    console.info(JSON.stringify(response["data"]["item"][1]["owner"]["name"]));
-    console.info(JSON.stringify(response["data"]["item"]));
-    if (response["code"] === 0 && response["data"]["item"]) {
-      const items = JSON.stringify(response["data"]["item"]);
-      // 提取每个视频的信息
-      for (let i = 0; i < items.length; i++) {
-        // 输出每个视频的信息
-        let description = JSON.stringify(response["data"]["item"][i]["title"])//标题
-        let head = JSON.stringify(response["data"]["item"][i]["pic"])//封面URL
-        let video = JSON.stringify(response["data"]["item"][i]["uri"])//视频链接
-        let name = JSON.stringify(response["data"]["item"][i]["owner"]["name"])//UP主
-        let view = JSON.stringify(response["data"]["item"][i]["stat"]["view"])//播放量
-        let barrage = JSON.stringify(response["data"]["item"][i]["stat"]["danmaku"])//弹幕
-        let time = JSON.stringify(response["data"]["item"][i]["duration"])//时长
-
-        console.info("视频",i+1);
-        console.info("标题",description);
-        console.info("封面URL",head);
-        console.info("视频链接",video);
-        console.info("UP主",name);
-        console.info("播放量",view);
-        console.info("弹幕",barrage);
-        console.info("时长",time);
-        console.log('------------------------');
-      }
-    } else {
-      console.error('API 响应错误或数据缺失');
-    }
+  onPageShow(): void {
+    this.datas.getData(this.index).controller.start();
   }
-
+  onPageHide(): void {
+    this.datas.getData(this.index).controller.pause();
+  }
   build() {
-    Row() {
+    Column(){
+      Swiper(){
+        LazyForEach(this.datas,(item:VideoData,index:number)=>{
+          Video({
+            src: item.video,
+            controller: this.myController, // 同样使用同一个控制器
+            previewUri:item.head,
+          })
+            .autoPlay(true)
+            .objectFit(ImageFit.Contain)
+        },(item:VideoData)=>JSON.stringify(item))
+      }
+      .width('100%')
+      .height('100%')
+      .vertical(true)
+
     }
-    .height('100%');
+    .width('100%')
+    .height('100%')
   }
 }
+

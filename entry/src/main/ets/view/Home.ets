@@ -25,6 +25,9 @@ export struct Home {
       barrage:'114514',//弹幕数
       time:'511',//时长
       controller:this.myController,
+      auto:true,
+      play:true,
+      index:0,
     },
     {
       description:'总得来看看雪山吧',//标题
@@ -35,6 +38,9 @@ export struct Home {
       barrage:'114514',//弹幕数
       time:'511',//时长
       controller:this.myController,
+      auto:true,
+      play:true,
+      index:1,
     },
     {
       description:'总得来看看雪山吧',//标题
@@ -45,6 +51,9 @@ export struct Home {
       barrage:'114514',//弹幕数
       time:'511',//时长
       controller:this.myController,
+      auto:true,
+      play:true,
+      index:2,
     },
   ]
 

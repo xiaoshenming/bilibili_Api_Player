@@ -5,6 +5,22 @@
       "value": "#FFFFFF"
     },
     {
+      "name": "font_color",
+      "value": "#aaaaaa"
+    },
+    {
+      "name": "background_color",
+      "value": "#e8e8e8"
+    },
+    {
+      "name": "time_color",
+      "value": "#bbbbbb"
+    },
+    {
+      "name": "up_color",
+      "value": "#ff3300"
+    },
+    {
       "name": "bottom_tabs_background_color",
       "value": "#FFFFFFFF"
     },

@@ -53,8 +53,9 @@ export struct test7 {
           barrage: item["stat"]["danmaku"], // 弹幕数
           time: item["duration"], // 时长
           controller: this.myController,
-
-
+          auto:true,
+          play:true,
+          index:0,
         });
       }
     } else {
