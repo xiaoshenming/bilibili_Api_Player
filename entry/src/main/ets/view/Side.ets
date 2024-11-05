@@ -188,7 +188,7 @@ export struct VideoDes {
             .fontSize($r('app.integer.name_font_size'))
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
-            .margin({ bottom: $r('app.integer.name_margin_bottom') ,top:12})
+            .margin({ bottom: $r('app.integer.name_margin_bottom') ,top:12,left:5})
             .alignRules({
               top: { anchor: "__container__", align: VerticalAlign.Top },
               left: { anchor: "head", align: HorizontalAlign.End }
@@ -197,12 +197,15 @@ export struct VideoDes {
 
           if (this.isFocus) {
             // Image($r('app.media.img'))
-            Text('+关注')
+            Text('+ 关注')
+              .textAlign(TextAlign.Center)
+              .fontSize(12)
               .width(50)
               .height(20)
               .borderRadius(5)
               .backgroundColor('#f75a9c')
-              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12})
+              .fontColor('#ffffff')
+              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12,left:5})
               .onClick(() => {
                 animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
                   this.isFocus = !this.isFocus;
@@ -217,11 +220,14 @@ export struct VideoDes {
           if (!this.isFocus) {
             // Image($r('app.media.follow1'))
             Text('取消关注')
+              .textAlign(TextAlign.Center)
+              .fontSize(12)
               .width(50)
               .height(20)
               .borderRadius(5)
-              .backgroundColor('#f75a9c')
-              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12})
+              .backgroundColor('#7ee5e5e5')
+              .fontColor('#000000')
+              .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12,left:5})
               .onClick(() => {
                 animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
                   this.isFocus = !this.isFocus;
@@ -240,17 +246,13 @@ export struct VideoDes {
       .padding({ bottom: $r('app.integer.avatar_padding_bottom') })
 
 
-
-
-
       Text(this.description)
         .fontSize($r('app.integer.new_font_size'))
         .fontColor(Color.White)
         .width(Const.TEXT_WIDTH)
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-
+        .margin({bottom:50,top:-40})
     }
     .padding({ left: $r('app.integer.name_padding_left') })
     .alignItems(HorizontalAlign.Start)
