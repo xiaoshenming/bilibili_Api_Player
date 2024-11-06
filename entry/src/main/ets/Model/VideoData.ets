@@ -8,6 +8,7 @@ export interface VideoData{
   name:string,//UP主
   face:Resource|string,//UP主头像
   view:string,//播放量
+  total:string,//当前观看人数
   like:string,//点赞
   barrage:string,//弹幕
   time:string,//时长

@@ -24,6 +24,7 @@ export struct Home {
       name:'@登山爱好者',//UP主
       face:'aaa',
       view:'114514',//播放量
+      total:'55555',
       like:'1111',
       barrage:'114514',//弹幕数
       time:'511',//时长

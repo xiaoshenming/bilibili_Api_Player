@@ -21,9 +21,143 @@ export struct Side {
   @State commentCount: string = '123';
   @State favoriteCount: string = '123';
   @State shareCount: string = '123';
+  @State toubiCount: string = '123';
   @State isLike: boolean = false;
   @State isFavorite: boolean = true;
+  @State isToubi: boolean = true;
   @State index: number = 0;
+
+  build() {
+    Column() {
+
+
+      Column() {
+        if (!this.isLike) {
+          Image($r('app.media.hand_thumbsup_fill'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .objectFit(ImageFit.ScaleDown)
+            .onClick(() => {
+              this.changeLikeCount(true);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.likeCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+        if (this.isLike) {
+          Image($r('app.media.hand_thumbsup_fill1'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .objectFit(ImageFit.ScaleDown)
+            .onClick(() => {
+              this.changeLikeCount(false);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.likeCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+      }.width(Const.COLUMN_WIDTH)
+      .height($r('app.integer.all_fabulous_height'))
+
+
+      Column() {
+        Image($r('app.media.new_icon'))
+          .height($r('app.integer.fabulous_height'))
+          .width($r('app.integer.fabulous_width'))
+          .objectFit(ImageFit.ScaleDown)
+          .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+        Text(this.commentCount)
+          .fontSize($r('app.integer.fabulous_font_size'))
+          .fontColor(Color.White)
+          .opacity($r('app.float.fabulous_opacity'))
+      }.width(Const.COLUMN_WIDTH)
+      .height($r('app.integer.all_fabulous_height'))
+      Column() {
+        if (this.isToubi) {
+          Image($r('app.media.toubi'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .onClick(() => {
+              this.changeisToubi(true);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.toubiCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+        if (!this.isToubi) {
+          Image($r('app.media.toubi1'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .onClick(() => {
+              this.changeisToubi(false);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.toubiCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+      }.width(Const.COLUMN_WIDTH)
+      .height($r('app.integer.all_fabulous_height'))
+
+
+      Column() {
+        if (this.isFavorite) {
+          Image($r('app.media.ic_public_highlightsed_white'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .onClick(() => {
+              this.changeFavoriteCount(true);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.favoriteCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+        if (!this.isFavorite) {
+          Image($r('app.media.ic_public_highlightsed_yellow'))
+            .height($r('app.integer.fabulous_height'))
+            .width($r('app.integer.fabulous_width'))
+            .onClick(() => {
+              this.changeFavoriteCount(false);
+            })
+            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
+          Text(this.favoriteCount)
+            .fontSize($r('app.integer.fabulous_font_size'))
+            .fontColor(Color.White)
+            .opacity($r('app.float.fabulous_opacity'))
+        }
+      }.width(Const.COLUMN_WIDTH)
+      .height($r('app.integer.all_fabulous_height'))
+
+
+
+
+      Column() {
+        Image($r('app.media.share1'))
+          .height($r('app.integer.share_height'))
+          .width($r('app.integer.share_width'))
+          .objectFit(ImageFit.ScaleDown)
+            // Text($r('app.string.share'))
+        Text(this.shareCount)
+          .fontSize($r('app.integer.fabulous_font_size'))
+          .fontColor(Color.White)
+          .opacity($r('app.float.fabulous_opacity'))
+      }.width(Const.COLUMN_WIDTH)
+      .height($r('app.integer.share_all_width'))
+    }
+    .margin({ bottom: $r('app.integer.side_margin_bottom') })
+    .height(Const.COLUMN_HEIGHT)
+    .width($r('app.integer.side_width'))
+    .justifyContent(FlexAlign.End)
+  }
 
   /**
    * The callback function for the click event of the like button.
@@ -59,103 +193,17 @@ export struct Side {
     })
   }
 
-  build() {
-    Column() {
-
-
-      Column() {
-        if (!this.isLike) {
-          Image($r('app.media.fabulous'))
-            .height($r('app.integer.fabulous_height'))
-            .width($r('app.integer.fabulous_width'))
-            .objectFit(ImageFit.ScaleDown)
-            .onClick(() => {
-              this.changeLikeCount(true);
-            })
-            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.likeCount)
-            .fontSize($r('app.integer.fabulous_font_size'))
-            .fontColor(Color.White)
-            .opacity($r('app.float.fabulous_opacity'))
-        }
-        if (this.isLike) {
-          Image($r('app.media.fabulo'))
-            .height($r('app.integer.fabulous_height'))
-            .width($r('app.integer.fabulous_width'))
-            .objectFit(ImageFit.ScaleDown)
-            .onClick(() => {
-              this.changeLikeCount(false);
-            })
-            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.likeCount)
-            .fontSize($r('app.integer.fabulous_font_size'))
-            .fontColor(Color.White)
-            .opacity($r('app.float.fabulous_opacity'))
-        }
-      }.width(Const.COLUMN_WIDTH)
-      .height($r('app.integer.all_fabulous_height'))
-
-
-      Column() {
-        Image($r('app.media.new_icon'))
-          .height($r('app.integer.fabulous_height'))
-          .width($r('app.integer.fabulous_width'))
-          .objectFit(ImageFit.ScaleDown)
-          .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-        Text(this.commentCount)
-          .fontSize($r('app.integer.fabulous_font_size'))
-          .fontColor(Color.White)
-          .opacity($r('app.float.fabulous_opacity'))
-      }.width(Const.COLUMN_WIDTH)
-      .height($r('app.integer.all_fabulous_height'))
-
-      Column() {
-        if (this.isFavorite) {
-          Image($r('app.media.ic_public_highlightsed_white'))
-            .height($r('app.integer.fabulous_height'))
-            .width($r('app.integer.fabulous_width'))
-            .onClick(() => {
-              this.changeFavoriteCount(true);
-            })
-            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.favoriteCount)
-            .fontSize($r('app.integer.fabulous_font_size'))
-            .fontColor(Color.White)
-            .opacity($r('app.float.fabulous_opacity'))
-        }
-        if (!this.isFavorite) {
-          Image($r('app.media.ic_public_highlightsed_yellow'))
-            .height($r('app.integer.fabulous_height'))
-            .width($r('app.integer.fabulous_width'))
-            .onClick(() => {
-              this.changeFavoriteCount(false);
-            })
-            .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.favoriteCount)
-            .fontSize($r('app.integer.fabulous_font_size'))
-            .fontColor(Color.White)
-            .opacity($r('app.float.fabulous_opacity'))
-        }
-      }.width(Const.COLUMN_WIDTH)
-      .height($r('app.integer.all_fabulous_height'))
-
-      Column() {
-        Image($r('app.media.share1'))
-          .height($r('app.integer.share_height'))
-          .width($r('app.integer.share_height'))
-          .objectFit(ImageFit.ScaleDown)
-            // Text($r('app.string.share'))
-        Text(this.shareCount)
-          .fontSize($r('app.integer.fabulous_font_size'))
-          .fontColor(Color.White)
-          .opacity($r('app.float.fabulous_opacity'))
-      }.width(Const.COLUMN_WIDTH)
-      .height($r('app.integer.share_all_width'))
+  private changeisToubi(isIncrease: boolean) {
+    let toubiCount = Number(this.toubiCount);
+    if(isIncrease) {
+      toubiCount++;
+    } else {
+      toubiCount--;
     }
-    .margin({ bottom: $r('app.integer.side_margin_bottom') })
-    .height(Const.COLUMN_HEIGHT)
-    .width($r('app.integer.side_width'))
-    .justifyContent(FlexAlign.End)
+    this.toubiCount = '' + toubiCount;
+    animateTo({ duration: Const.DURATION, curve: Curve.EaseInOut }, () => {
+      this.isToubi = !this.isToubi;
+    })
   }
 }
 
@@ -199,6 +247,7 @@ export struct VideoDes {
             })
             .id('name')
 
+          Stack({ alignContent: Alignment.Bottom }) {
           if (this.isFocus) {
             // Image($r('app.media.img'))
             Text('+ 关注')
@@ -206,7 +255,7 @@ export struct VideoDes {
               .fontSize(12)
               .width(50)
               .height(20)
-              .borderRadius(5)
+              .borderRadius(9.5)
               .backgroundColor('#f75a9c')
               .fontColor('#ffffff')
               .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12,left:5})
@@ -215,11 +264,6 @@ export struct VideoDes {
                   this.isFocus = !this.isFocus;
                 })
               })
-              .alignRules({
-                top: { anchor: "__container__", align: VerticalAlign.Top },
-                left: { anchor: "name", align: HorizontalAlign.End }
-              })
-              .id('isFocus')
           }
           if (!this.isFocus) {
             // Image($r('app.media.follow1'))
@@ -228,7 +272,7 @@ export struct VideoDes {
               .fontSize(12)
               .width(50)
               .height(20)
-              .borderRadius(5)
+              .borderRadius(9.5)
               .backgroundColor('#7ee5e5e5')
               .fontColor('#000000')
               .margin({ bottom: $r('app.integer.concern_margin_bottom') ,top:12,left:5})
@@ -237,12 +281,16 @@ export struct VideoDes {
                   this.isFocus = !this.isFocus;
                 })
               })
-              .alignRules({
-                top: { anchor: "__container__", align: VerticalAlign.Top },
-                left: { anchor: "name", align: HorizontalAlign.End }
-              })
-              .id('isFocus')
+            }
           }
+          // .width(50)
+          // .height(20)
+          .borderRadius(9.5)
+          .alignRules({
+            top: { anchor: "__container__", align: VerticalAlign.Top },
+            left: { anchor: "name", align: HorizontalAlign.End }
+          })
+          .id('isFocus')
         }
       }
       // .width(Const.FULL_SIZE)

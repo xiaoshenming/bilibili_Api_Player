@@ -2,11 +2,11 @@
   "integer": [
     {
       "name": "search_icon_width",
-      "value": 20
+      "value": 30
     },
     {
       "name": "search_icon_height",
-      "value": 20
+      "value": 30
     },
     {
       "name": "tab_font_size",
@@ -34,11 +34,11 @@
     },
     {
       "name": "add_icon_width",
-      "value": 20
+      "value": 30
     },
     {
       "name": "add_icon_height",
-      "value": 20
+      "value": 30
     },
     {
       "name": "tab_list_height",
@@ -94,11 +94,11 @@
     },
     {
       "name": "share_height",
-      "value": 25
+      "value": 30
     },
     {
       "name": "share_width",
-      "value": 30
+      "value": 35
     },
     {
       "name": "share_all_width",
