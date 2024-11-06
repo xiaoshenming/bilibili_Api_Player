@@ -96,8 +96,8 @@ export struct VideoPlayer {
     if(params["videoDatas"].length==1){
       this.localonline=true
       console.log('在线解析模式')
-      // blibliurl=params["videoDatas"][0]["video"]
-      blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
+      blibliurl=params["videoDatas"][0]["video"]
+      // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
       let items: Array<string> = params["videoDatas"];
       const response = await xmapi(blibliurl);
       if (response) {
@@ -110,8 +110,8 @@ export struct VideoPlayer {
         mp4 = `https://www.bilibili.com/video/BV1kpSmYTEoy${params["videoDatas"][0]["bvid"]}.mp4`;
         console.error('请求失败',mp4);
       }
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+      // for (let i = 0; i < items.length; i++) {
+        const item = items[0];
         this.datas.pushData({
           description: item["description"], // 标题
           head: item["head"], // 封面URL
@@ -131,9 +131,9 @@ export struct VideoPlayer {
           controller: this.myController,
           auto: false,
           play: false,
-          index: i+2,
+          index: 2,
         });
-      }
+      // }
 
     }else{
       this.localonline=false
@@ -148,7 +148,7 @@ export struct VideoPlayer {
           bvid: item["bvid"],
           name: item["name"], // UP主
           face: item["face"],
-          view: item["views"], // 播放量
+          view: item["view"], // 播放量
           total: item["total"], //当前观看人数
           like: item["like"],
           barrage: item["barrage"], // 弹幕数
@@ -226,6 +226,7 @@ export struct VideoPlayer {
                     favoriteCount: String(item.favorites), // 收藏数
                     shareCount: String(item.shares), // 分享数
                     toubiCount: String(item.coins),
+
                     index: item.index // 索引
                   })
                 }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding($r('app.integer.stack_padding'))
@@ -234,8 +235,9 @@ export struct VideoPlayer {
                   head: item.face,
                   name: item.name,
                   description: item.description,
-                  hotspot: '2024年11月5日17点17分',
-                  time: item.time
+                  hotspot: item.pubdate,
+                  time: item.time,
+                  viewCount:item.view,
                 })
                   .margin({ bottom: $r('app.integer.video_des_margin_bottom') })
                 // Row() {

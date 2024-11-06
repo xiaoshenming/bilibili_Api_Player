@@ -27,6 +27,7 @@ export struct Side {
   @State isToubi: boolean = true;
   @State index: number = 0;
 
+
   build() {
     Column() {
 
@@ -41,7 +42,7 @@ export struct Side {
               this.changeLikeCount(true);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.likeCount)
+          Text(this.formatwCount(this.likeCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -55,7 +56,7 @@ export struct Side {
               this.changeLikeCount(false);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.likeCount)
+          Text(this.formatwCount(this.likeCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -70,7 +71,7 @@ export struct Side {
           .width($r('app.integer.fabulous_width'))
           .objectFit(ImageFit.ScaleDown)
           .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-        Text(this.commentCount)
+        Text(this.formatwCount(this.commentCount))
           .fontSize($r('app.integer.fabulous_font_size'))
           .fontColor(Color.White)
           .opacity($r('app.float.fabulous_opacity'))
@@ -85,7 +86,7 @@ export struct Side {
               this.changeisToubi(true);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.toubiCount)
+          Text(this.formatwCount(this.toubiCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -98,7 +99,7 @@ export struct Side {
               this.changeisToubi(false);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.toubiCount)
+          Text(this.formatwCount(this.toubiCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -116,7 +117,7 @@ export struct Side {
               this.changeFavoriteCount(true);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.favoriteCount)
+          Text(this.formatwCount(this.favoriteCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -129,7 +130,7 @@ export struct Side {
               this.changeFavoriteCount(false);
             })
             .margin({ bottom: $r('app.integer.fabulous_margin_bottom') })
-          Text(this.favoriteCount)
+          Text(this.formatwCount(this.favoriteCount))
             .fontSize($r('app.integer.fabulous_font_size'))
             .fontColor(Color.White)
             .opacity($r('app.float.fabulous_opacity'))
@@ -146,7 +147,7 @@ export struct Side {
           .width($r('app.integer.share_width'))
           .objectFit(ImageFit.ScaleDown)
             // Text($r('app.string.share'))
-        Text(this.shareCount)
+        Text(this.formatwCount(this.shareCount))
           .fontSize($r('app.integer.fabulous_font_size'))
           .fontColor(Color.White)
           .opacity($r('app.float.fabulous_opacity'))
@@ -205,6 +206,15 @@ export struct Side {
       this.isToubi = !this.isToubi;
     })
   }
+  // 格式化播放量
+  private formatwCount(Count: String) {
+    let CountNum = Number(Count);
+    if (CountNum >= 10000) {
+      return (CountNum / 10000).toFixed(1) + '万';
+    } else {
+      return CountNum.toString();
+    }
+  }
 }
 
 @Component
@@ -216,6 +226,7 @@ export struct VideoDes {
   @State description: string = '';
   @State hotspot: string = '';
   @State time: string = '';
+  @State viewCount:string='';
   @State isFocus: boolean = true;
   build() {
     Column() {
@@ -297,7 +308,7 @@ export struct VideoDes {
       .height($r('app.integer.avatar_height'))
       .padding({ bottom: $r('app.integer.avatar_padding_bottom') })
 
-
+      // RelativeContainer(){
       Text(this.description)
         .fontSize($r('app.integer.new_font_size'))
         .fontColor(Color.White)
@@ -305,9 +316,29 @@ export struct VideoDes {
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .margin({bottom:50,top:-40})
+
+      Text(this.formatwCount(this.viewCount)+'播放')
+        .fontSize($r('app.integer.new_font_size'))
+        .fontColor(Color.White)
+        .width(Const.TEXT_WIDTH)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .margin({bottom:50,top:-40})
+      // }
     }
     .padding({ left: $r('app.integer.name_padding_left') })
     .alignItems(HorizontalAlign.Start)
     .width(Const.VIDEO_INFO_WIDTH)
   }
+
+  // 格式化播放量
+  private formatwCount(Count: String) {
+    let CountNum = Number(Count);
+    if (CountNum >= 10000) {
+      return (CountNum / 10000).toFixed(1) + '万';
+    } else {
+      return CountNum.toString();
+    }
+  }
+
 }
