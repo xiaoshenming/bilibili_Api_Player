@@ -98,6 +98,7 @@ export struct VideoPlayer {
       console.log('在线解析模式')
       blibliurl=params["videoDatas"][0]["video"]
       // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
+      mp4 = `https://www.bilibili.com/video/BV1kpSmYTEoy${params["videoDatas"][0]["bvid"]}.mp4`;
       let items: Array<string> = params["videoDatas"];
       const response = await xmapi(blibliurl);
       if (response) {
@@ -115,7 +116,7 @@ export struct VideoPlayer {
         this.datas.pushData({
           description: item["description"], // 标题
           head: item["head"], // 封面URL
-          video: mp4, // 视频链接
+          video: String(mp4), // 视频链接
           bvid: item["bvid"],
           name: item["name"], // UP主
           face: item["face"],
