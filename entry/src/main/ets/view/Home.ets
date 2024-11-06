@@ -44,7 +44,8 @@ export struct Home {
 
   // 加载数据的公共方法
   private async loadData() {
-    const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
+    // const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
+    const sessdata = 'ab9d6d14%2C1746252800%2C9f8a2%2Ab1CjDy9wFwCOPazj3xO5hhngHPdK3Iy0kaicJX2rOm6GhJYUynqJTtckHDkSZAPDFjGZoSVjdkVWUxN1VYZlBuYUp3a291eDdLOVl3VnRKV0l3UUJnZHNSRTY2T3ppWkphbkhLeU1fc05DYVZVb3Ywd1h2eTd6U1hkWnZZTlNCdXR1OUIybzM1clh3IIEC'; // 替换成实际的 SESSDATA
     const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
 
     if (response) {

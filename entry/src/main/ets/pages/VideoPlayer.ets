@@ -394,7 +394,6 @@ export struct VideoPlayer {
           this.index = index;
           this.playBoo = true;
           videoIndex = index;
-
         })
       }
       .width('100%')
