@@ -69,7 +69,7 @@ struct Index {
         }.tabBar(this.TabBuilder(0, 'Home'))
 
         TabContent() {
-          // Dynamic()
+          Dynamic()
           // test6()
         }.tabBar(this.TabBuilder(1, 'Dynamic'))
         TabContent() {

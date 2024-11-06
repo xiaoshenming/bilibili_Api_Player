@@ -81,9 +81,9 @@ export struct VideoPlayer {
     console.info(JSON.stringify(params["videoDatas"]));
     console.info(JSON.stringify(params["videoDatas"][0]["description"]));
 
-    // blibliurl=params["videoDatas"][0]["video"]
+    blibliurl=params["videoDatas"][0]["video"]
     // blibliurl='https://www.bilibili.com/video/BV1yRS3YqETN';
-    blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
+    // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
     console.info('地址获取'+blibliurl)
 
     // let mp5 = `http://10.3.36.9:7894/download/${params["videoDatas"][0]["bvid"]}.mp4`;
