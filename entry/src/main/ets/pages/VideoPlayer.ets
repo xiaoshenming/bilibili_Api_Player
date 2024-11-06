@@ -16,6 +16,7 @@ export struct VideoPlayer {
   private myController:VideoController =new VideoController();
   private datas:MyDataSource =new MyDataSource();
   @State playBoo:boolean=true;
+  @State localonline:boolean=true;
   @State index:number =0;
   @State totalindex:string = '111';
   @State currentIndex: number = 1;
@@ -76,53 +77,98 @@ export struct VideoPlayer {
     for (let index = 0; index < this.videoDatas.length; index++) {
       this.datas.pushData(this.videoDatas[index]);
     }
+
+
+
     const params: object = router.getParams();
     console.info(JSON.stringify(params));
     console.info(JSON.stringify(params["videoDatas"]));
-    console.info(JSON.stringify(params["videoDatas"][0]["description"]));
+    // console.info(JSON.stringify(params["videoDatas"][0]["description"]));
 
-    blibliurl=params["videoDatas"][0]["video"]
+    // blibliurl=params["videoDatas"][0]["video"]
     // blibliurl='https://www.bilibili.com/video/BV1yRS3YqETN';
-    // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
+    blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
     console.info('地址获取'+blibliurl)
 
     // let mp5 = `http://10.3.36.9:7894/download/${params["videoDatas"][0]["bvid"]}.mp4`;
     // console.log('捏造地址',mp5)
-    const response = await xmapi(blibliurl);
-    if (response) {
-      console.info(JSON.stringify(response));
-      mp4=response["downloadLink"]
-      itemss = response["data"];
-      console.info(JSON.stringify(response["downloadLink"]));
-      console.info('播放量',JSON.stringify(response["data"]["current_viewers"]));
-    } else {
-      mp4 = `https://www.bilibili.com/video/BV1kpSmYTEoy${params["videoDatas"][0]["bvid"]}.mp4`;
-      console.error('请求失败',mp4);
+
+    if(params["videoDatas"].length==1){
+      this.localonline=true
+      console.log('在线解析模式')
+      // blibliurl=params["videoDatas"][0]["video"]
+      blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
+      let items: Array<string> = params["videoDatas"];
+      const response = await xmapi(blibliurl);
+      if (response) {
+        console.info(JSON.stringify(response));
+        mp4=response["downloadLink"]
+        itemss = response["data"];
+        console.info(JSON.stringify(response["downloadLink"]));
+        console.info('播放量',JSON.stringify(response["data"]["current_viewers"]));
+      } else {
+        mp4 = `https://www.bilibili.com/video/BV1kpSmYTEoy${params["videoDatas"][0]["bvid"]}.mp4`;
+        console.error('请求失败',mp4);
+      }
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        this.datas.pushData({
+          description: item["description"], // 标题
+          head: item["head"], // 封面URL
+          video: mp4, // 视频链接
+          bvid: item["bvid"],
+          name: item["name"], // UP主
+          face: item["face"],
+          view: itemss["views"], // 播放量
+          total: itemss["current_viewers"], //当前观看人数
+          like: item["like"],
+          barrage: itemss["danmus"], // 弹幕数
+          time: item["time"], // 时长
+          pubdate: itemss["created_at"],
+          coins: itemss["coins"], //投币
+          favorites: itemss["favorites"], //收藏
+          shares: itemss["shares"], //转发
+          controller: this.myController,
+          auto: false,
+          play: false,
+          index: i+2,
+        });
+      }
+
+    }else{
+      this.localonline=false
+      console.log('缓存加载模式')
+      let items: Array<string> = params["videoDatas"];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        this.datas.pushData({
+          description: item["description"], // 标题
+          head: item["head"], // 封面URL
+          video: item["video"], // 视频链接
+          bvid: item["bvid"],
+          name: item["name"], // UP主
+          face: item["face"],
+          view: item["views"], // 播放量
+          total: item["total"], //当前观看人数
+          like: item["like"],
+          barrage: item["barrage"], // 弹幕数
+          time: item["time"], // 时长
+          pubdate: item["pubdate"],
+          coins: item["coins"], //投币
+          favorites: item["favorites"], //收藏
+          shares: item["shares"], //转发
+          controller: this.myController,
+          auto: false,
+          play: false,
+          index: i+2,
+        });
+      }
     }
 
-    const items: Array<string> = params["videoDatas"];
-    const item = items[0];
-    this.datas.pushData({
-      description: item["description"], // 标题
-      head: item["head"], // 封面URL
-      video:mp4, // 视频链接
-      bvid:item["bvid"],
-      name: item["name"], // UP主
-      face:item["face"],
-      view: itemss["views"], // 播放量
-      total:itemss["current_viewers"],//当前观看人数
-      like:item["like"],
-      barrage: itemss["danmus"], // 弹幕数
-      time: item["time"], // 时长
-      pubdate:itemss["created_at"],
-      coins: itemss["coins"],//投币
-      favorites: itemss["favorites"],//收藏
-      shares: itemss["shares"],//转发
-      controller: this.myController,
-      auto:false,
-      play:false,
-      index:2,
-    });
+
+
+
+
   }
   onPageShow(): void {
     this.datas.getData(this.index).controller.start();

@@ -67,7 +67,7 @@ export struct Dynamic {
           video: item["download_link"], // 视频链接
           bvid:item["video_id"],//地址
           name: '小明', // UP主
-          face:$r('app.media.express'),
+          face:$r('app.media.xnn'),
           view: item["views"], // 播放量
           total:item["current_viewers"],
           like:item["likes"],//点赞
@@ -160,7 +160,7 @@ export struct Dynamic {
                     //点击之后跳转到Videoplay
                     console.log(`视频名称: ${item.description}`);
                     console.log(`地址: ${item.head}`);
-                    router.pushUrl({ url: "pages/VideoPlayer", params: { videoDatas: [item] } });
+                    router.pushUrl({ url: "pages/VideoPlayer", params: { videoDatas:this.datas.getAllData()  } });
                   })
                   .borderRadius(5)
                   .width('100%')
