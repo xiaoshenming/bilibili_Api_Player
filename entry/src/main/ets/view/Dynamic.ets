@@ -30,7 +30,7 @@ export struct Dynamic {
   @State index: number = 0;
   @State apiResponse: object = []; // 存储原始 API 响应
   @State loadingMore: boolean = false; // 用于指示是否正在加载更多数据
-
+  @State bottomTabIndex: number = 1;
   @Styles
   listCard() {
     .backgroundColor(Color.White)
@@ -133,12 +133,15 @@ export struct Dynamic {
   build() {
     Scroll() {
       Column() {
-        Text("Scroll Area")
+        Text("数据库缓存视频")
           .width("100%")
           .height("10%")
           .backgroundColor('#0080DC')
           .textAlign(TextAlign.Center);
-        Tabs({ barPosition: BarPosition.Start }) {
+        Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex}) {
+
+          TabContent() {
+          }.tabBar("直播");
           TabContent() {
             List({ space: 5 }) {
               LazyForEach(this.datas, (item: VideoData, index: number) => {
@@ -209,10 +212,18 @@ export struct Dynamic {
               scrollForward: NestedScrollMode.PARENT_FIRST,
               scrollBackward: NestedScrollMode.SELF_FIRST
             });
-          }.tabBar("Tab1");
+          }.tabBar("推荐");
 
           TabContent() {
-          }.tabBar("Tab2");
+          }.tabBar("热门");
+          TabContent() {
+          }.tabBar("动画");
+          TabContent() {
+          }.tabBar("影视");
+          TabContent() {
+          }.tabBar("新征程");
+          TabContent() {
+          }.tabBar("#");
         }
         .padding({ left: 5, right: 5 })
         .vertical(false)

@@ -15,15 +15,11 @@
 
 
 import { Home } from '../view/Home';
-// import { test6 } from '../view/test6';
-import { test7 } from '../view/test7';
 import { Dynamic } from '../view/Dynamic';
 import { Add } from '../view/Add';
 import { Vipshopping } from '../view/Vipshopping';
 import { Mine } from '../view/Mine';
 import { VideoPlayer } from './VideoPlayer';
-// import { test5 } from './test5';
-// import { test4 } from './test4';
 import { CommonConstants as Const } from '../common/constants/CommonConstants';
 import { BottomTabsList } from '../viewmodel/BottomTabsModel';
 
@@ -70,20 +66,15 @@ struct Index {
 
         TabContent() {
           Dynamic()
-          // test6()
         }.tabBar(this.TabBuilder(1, 'Dynamic'))
         TabContent() {
           Add()
         }.tabBar(this.TabBuilder(2, 'add'))
         TabContent() {
-          // Vipshopping()
-          test7()
+          Vipshopping()
         }.tabBar(this.TabBuilder(3, 'Vipshopping'))
         TabContent() {
-          // Mine()
-          VideoPlayer()
-          // test5()
-          // test4()
+          Mine()
         }.tabBar(this.TabBuilder(4, 'Mine'))
       }
       .width('100%')
