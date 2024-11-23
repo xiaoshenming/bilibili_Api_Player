@@ -63,20 +63,20 @@ export struct Dynamic {
         const item = items[i];
         this.datas.pushData({
           description: item["title"], // 标题
-          head: item["cover_url"], // 封面URL
+          head: item["pic"], // 封面URL
           video: item["download_link"], // 视频链接
-          bvid:item["video_id"],//地址
-          name: '小明', // UP主
-          face:$r('app.media.xnn'),
-          view: item["views"], // 播放量
-          total:item["current_viewers"],
-          like:item["likes"],//点赞
-          barrage: item["danmus"], // 弹幕数
-          time: '555', // 时长
-          pubdate:item["created_at"],//发布时间
-          coins: item["coins"],//投币
-          favorites: item["favorites"],//收藏
-          shares: item["shares"],//转发
+          bvid:item["bvid"],//地址
+          name: item['name'], // UP主
+          face:item['face'],//头像
+          view: item["view"], // 播放量
+          total:item["current_viewers"]?? 5,//当前观看人数
+          like:item["like"],//点赞
+          barrage: item["danmaku"], // 弹幕数
+          time: item["duration"], // 时长
+          pubdate:item["pubdate"],//发布时间
+          coins: item["coin"],//投币
+          favorites: item["favorite"],//收藏
+          shares: item["share"],//转发
           controller: this.myController,
           auto:true,
           play:true,
@@ -85,20 +85,20 @@ export struct Dynamic {
 
         const updatedData: VideoData={
           description: item["title"], // 标题
-          head: item["cover_url"], // 封面URL
+          head: item["pic"], // 封面URL
           video: item["download_link"], // 视频链接
-          bvid:item["video_id"],//地址
-          name: '小明', // UP主
-          face:$r('app.media.xnn'),
-          view: item["views"], // 播放量
-          total:item["current_viewers"],
-          like:item["likes"],//点赞
-          barrage: item["danmus"], // 弹幕数
-          time: '555', // 时长
-          pubdate:item["created_at"],//发布时间
-          coins: item["coins"],//投币
-          favorites: item["favorites"],//收藏
-          shares: item["shares"],//转发
+          bvid:item["bvid"],//地址
+          name: item['name'], // UP主
+          face:item['face'],//头像
+          view: item["view"], // 播放量
+          total:item["current_viewers"]?? 5,//当前观看人数
+          like:item["like"],//点赞
+          barrage: item["danmaku"], // 弹幕数
+          time: item["duration"], // 时长
+          pubdate:item["pubdate"],//发布时间
+          coins: item["coin"],//投币
+          favorites: item["favorite"],//收藏
+          shares: item["share"],//转发
           controller: this.myController,
           auto:true,
           play:true,

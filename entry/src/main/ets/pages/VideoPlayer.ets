@@ -50,7 +50,7 @@ export struct VideoPlayer {
     {
       description: '总得来看看雪山吧', //标题
       head: 'http://i2.hdslb.com/bfs/archive/c4603188a8d0caa468649820dbd5750612095236.jpg', //封面URL
-      video:'http://10.3.36.9:7894/BV1x3SRYZEJK.mp4',//视频链接
+      video:'http://10.3.36.10:7894/BV1x3SRYZEJK.mp4',//视频链接
       bvid:'BV1xuSnYwEsr',
       name: '画渣花小烙', //UP主
       face:'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
@@ -113,7 +113,7 @@ export struct VideoPlayer {
       console.log('在线解析模式')
       blibliurl=params["videoDatas"][0]["video"]
       // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
-      this.mp4 = `http://10.3.36.9:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
+      this.mp4 = `http://10.3.36.10:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
       let items: Array<string> = params["videoDatas"];
       const item = items[0];
 
@@ -148,25 +148,25 @@ export struct VideoPlayer {
         console.info(JSON.stringify(response["downloadLink"]));
         console.info('播放量',JSON.stringify(response["data"]["current_viewers"]));
       } else {
-        this.mp4 = `http://10.3.36.9:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
+        this.mp4 = `http://10.3.36.10:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
         console.error('请求失败',this.mp4);
       }
       const updatedData: VideoData={
           description: item["description"], // 标题
-          head: item["head"], // 封面URL
+          head: item["pic"], // 封面URL
           video: this.mp4, // 视频链接
           bvid: item["bvid"],
           name: item["name"], // UP主
           face: item["face"],
-          view: itemss["views"], // 播放量
-          total: itemss["current_viewers"], //当前观看人数
+          view: itemss["view"], // 播放量
+          total: itemss["current_viewers"]??5, //当前观看人数
           like: item["like"],
-          barrage: itemss["danmus"], // 弹幕数
+          barrage: itemss["danmaku"], // 弹幕数
           time: item["time"], // 时长
-          pubdate: itemss["created_at"],
-          coins: itemss["coins"], //投币
-          favorites: itemss["favorites"], //收藏
-          shares:itemss["shares"], //转发
+          pubdate: itemss["pubdate"],
+          coins: itemss["coin"], //投币
+          favorites: itemss["favorite"], //收藏
+          shares:itemss["share"], //转发
           controller: this.myController,
           auto: false,
           play: false,
@@ -195,6 +195,7 @@ export struct VideoPlayer {
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        console.info(item["duration"])
         this.datas.pushData({
           description: item["description"], // 标题
           head: item["head"], // 封面URL
@@ -203,7 +204,7 @@ export struct VideoPlayer {
           name: item["name"], // UP主
           face: item["face"],
           view: item["view"], // 播放量
-          total: item["total"], //当前观看人数
+          total: item["total"]??5, //当前观看人数
           like: item["like"],
           barrage: item["barrage"], // 弹幕数
           time: item["time"], // 时长
@@ -227,7 +228,7 @@ export struct VideoPlayer {
           name: item["name"], // UP主
           face: item["face"],
           view: item["view"], // 播放量
-          total: item["total"], //当前观看人数
+          total: item["total"]??5, //当前观看人数
           like: item["like"],
           barrage: item["barrage"], // 弹幕数
           time: item["time"], // 时长

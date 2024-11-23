@@ -13,79 +13,137 @@
  * limitations under the License.
  */
 
-
-import { Home } from '../view/Home';
-import { Dynamic } from '../view/Dynamic';
-import { Add } from '../view/Add';
-import { Vipshopping } from '../view/Vipshopping';
-import { Mine } from '../view/Mine';
-import { VideoPlayer } from './VideoPlayer';
+import { router } from '@kit.ArkUI';
 import { CommonConstants as Const } from '../common/constants/CommonConstants';
-import { BottomTabsList } from '../viewmodel/BottomTabsModel';
+import { splashImages } from '../viewmodel/SplashModel';
 
 @Entry
 @Component
 struct Index {
-  @StorageLink('bottomTabIndex') bottomTabIndex: number = 0;
-  private controller: TabsController = new TabsController();
+  private swiperController: SwiperController = new SwiperController();
+  private data: Resource[] = [];
+  @State countdown: number = Const.COUNTDOWN;
+  @State showSwiper: boolean = false;
+  private timer: number = 0;
 
-  @Builder
-  TabBuilder(index: number, name: string) {
-    Column() {
-      Image(this.bottomTabIndex === index ? BottomTabsList[index].iconSelected : BottomTabsList[index].icon)
-        .width('40%')
-        .height('40%')
-        .objectFit(ImageFit.Contain)
-
-      Text(BottomTabsList[index].text)
-        .fontSize($r('app.float.bottom_font_size'))
-        .opacity(0.6)
-        .fontColor(this.bottomTabIndex === index ?
-        $r('app.color.bottom_tabs_font_color_selected') : $r('app.color.bottom_tabs_font_color'))
+  aboutToAppear(): void {
+    let data: Resource[] = [];
+    let hours = new Date().getHours();
+    if (hours >= Const.MORNING_TIME && hours < Const.EVENING_TIME) {
+      data = splashImages.day;
+    } else if (hours >= Const.EVENING_TIME && hours <= Const.NIGHT_TIME) {
+      data = splashImages.dusk;
+    } else {
+      data = splashImages.night;
     }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .border({ width: { top: 0.5 }, color: "#FF182431" })
-    .backgroundColor($r('app.color.bottom_tabs_background_color'))//这里控制每个底部栏背景颜色
+    this.data = data;
+    setTimeout(() => {
+      this.showSwiper = true;
+      this.startTiming();
+    }, Const.SPLASH_DURATION);
   }
 
-  pageTransition() {
-    PageTransitionEnter({ duration: Const.SHARED_DURATION })
-      .slide(SlideEffect.Top)
-    PageTransitionExit({ delay: Const.EXIT_DELAY })
-      .opacity(0)
+  startTiming() {
+    this.timer = setInterval(() => {
+      this.countdown--;
+      if (this.countdown === 0) {
+        this.clearTiming();
+        this.jumpToMainPage();
+      }
+    }, Const.DURATION);
+  }
+
+  clearTiming() {
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+      this.timer = 0;
+    }
+  }
+
+  jumpToMainPage() {
+    this.clearTiming();
+    router.replaceUrl({
+      url: 'pages/MainPage'
+    });
+  }
+
+  aboutToDisappear() {
+    this.clearTiming();
   }
 
   build() {
-    Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.End, justifyContent: FlexAlign.End }) {
-      Tabs({ barPosition: BarPosition.End, index: this.bottomTabIndex, controller: this.controller }) {
-        TabContent() {
-          Home()
-        }.tabBar(this.TabBuilder(0, 'Home'))
+    Column() {
+      Stack() {
+        if (this.showSwiper) {
+          Swiper(this.swiperController) {
+            ForEach(this.data, (item: Resource) => {
+              Image(item)
+                .width(Const.FULL_SIZE)
+                .height(Const.FULL_SIZE)
+                .objectFit(ImageFit.Cover)
+            })
+          }
+          .loop(true)
+          .interval(2 * Const.DURATION)
+          .duration(Const.DURATION)
+          .autoPlay(true)
+          .indicator(Indicator.dot()
+            .bottom($r('app.float.100'))
+            .color($r('app.color.swiper_dot_color'))
+          )
+          .curve(Curve.Linear)
+          .onChange((index: number) => {
+            console.info(index.toString())
+          })
 
-        TabContent() {
-          Dynamic()
-        }.tabBar(this.TabBuilder(1, 'Dynamic'))
-        TabContent() {
-          Add()
-        }.tabBar(this.TabBuilder(2, 'add'))
-        TabContent() {
-          Vipshopping()
-        }.tabBar(this.TabBuilder(3, 'Vipshopping'))
-        TabContent() {
-          Mine()
-        }.tabBar(this.TabBuilder(4, 'Mine'))
+          Text() {
+            Span($r('app.string.skip'))
+            Span(`${this.countdown}`)
+          }
+          .onClick(() => this.jumpToMainPage())
+          .fontColor(Color.White)
+          .fontSize($r('app.float.12fp'))
+          .backgroundColor($r('app.color.swiper_jump_bg_color'))
+          .width($r('app.float.63'))
+          .height($r('app.float.24'))
+          .borderRadius($r('app.float.10'))
+          .textAlign(TextAlign.Center)
+          .position({
+            x: Const.PERCENTAGE_78,
+            y: $r('app.float.35')
+          })
+        } else {
+          Image($r('app.media.splash_bg'))
+            .width('100%')
+            .height('100%')
+          Image($r('app.media.ic_splash'))
+            .width($r('app.float.192'))
+            .height($r('app.float.192'))
+            .offset({
+              y: `-${Const.PERCENTAGE_15}`
+            })
+            .objectFit(ImageFit.Contain)
+
+          Column() {
+            Text(Const.SPLASH_DES)
+              .fontColor(Color.White)
+              .fontSize($r('app.float.font_size_24fp'))
+              .fontWeight(FontWeight.Medium)
+
+            Text(Const.SPLASH_WELCOME)
+              .fontSize($r('app.float.font_size_16fp'))
+              .fontColor(Color.White)
+              .margin({
+                top: $r('app.float.5')
+              })
+          }
+          .offset({
+            y: Const.PERCENTAGE_25
+          })
+        }
       }
-      .width('100%')
-      .vertical(false)
-      .barHeight('10%')
-      .scrollable(false)
-      .onChange((index: number) => {
-        this.bottomTabIndex = index;
-      })
-      .height('100%')
     }
-    .width('100%')
+    .height(Const.FULL_SIZE)
+    .width(Const.FULL_SIZE)
   }
 }
