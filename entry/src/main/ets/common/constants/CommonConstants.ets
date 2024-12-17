@@ -59,8 +59,8 @@ export class CommonConstants {
   /**
    * Title text.
    */
-  static readonly SPLASH_DES: string = '溪流背坡村';
-  static readonly SPLASH_WELCOME: string = '溪村欢迎您';
+  static readonly SPLASH_DES: string = '哔哩哔哩视频解析器';
+  static readonly SPLASH_WELCOME: string = '欢迎您';
   static readonly INTRODUCTION_TITLE: string = '区域导览';
   static readonly TRAIN_TITLE: string = "小火车";
   /**

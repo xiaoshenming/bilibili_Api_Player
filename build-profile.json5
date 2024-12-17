@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "certpath": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.cer",
-          "storePassword": "0000001A08E416A0A5E3BFD57BD16F7473BD86B4B526800ACB1E3E74E504C62DF0E957BF7DBE6B878F13",
+          "storePassword": "0000001B48D6D59157C2FB3C8BB75E2CB1CAE719DC17ADDE69FE3DD8991CF9A0AD796545A635CEB0C12C75",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001ADA0216ED8CF3587A0D1CCB8FA47D8B4F133F86D5D6A6ED492B392C11634362A6932336AF54E8",
+          "keyPassword": "0000001BF5343F80A9461053C60AEBA5D19FE9477B57348BC4A99F3BC7F7FB3E0F45D093764498AF60D721",
           "profile": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\Ming\\.ohos\\config\\default_bilibili_Api_Player_8mwTeZayVfMF97ZYL38MPLUZjgBVfXBIs_eAj9wJbDg=.p12"

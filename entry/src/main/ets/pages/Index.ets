@@ -83,14 +83,16 @@ struct Index {
                 .objectFit(ImageFit.Cover)
             })
           }
+
           .loop(true)
           .interval(2 * Const.DURATION)
           .duration(Const.DURATION)
           .autoPlay(true)
-          .indicator(Indicator.dot()
-            .bottom($r('app.float.100'))
-            .color($r('app.color.swiper_dot_color'))
-          )
+          .indicator(false)
+          // .indicator(Indicator.dot()
+          //   .bottom($r('app.float.100'))
+          //   .color($r('app.color.swiper_dot_color'))
+          // )
           .curve(Curve.Linear)
           .onChange((index: number) => {
             console.info(index.toString())

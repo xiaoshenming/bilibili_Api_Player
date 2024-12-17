@@ -118,7 +118,8 @@ export struct Home {
           .height("10%")
           .backgroundColor('#0080DC')
           .textAlign(TextAlign.Center);
-        Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex}) {
+        Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex})
+        {
           TabContent() {
           }.tabBar("直播");
 
@@ -191,7 +192,9 @@ export struct Home {
               scrollForward: NestedScrollMode.PARENT_FIRST,
               scrollBackward: NestedScrollMode.SELF_FIRST
             });
-          }.tabBar("推荐");
+
+          }.tabBar("推荐")
+
 
           TabContent() {
           }.tabBar("热门");
@@ -205,6 +208,15 @@ export struct Home {
           }.tabBar("#");
 
         }
+        .onChange((newIndex) => {
+          console.log(`当前选择的Tab索引: ${newIndex}`);
+          // 判断是否切换到“推荐”标签
+          if (newIndex === 1) { // 假设“推荐”对应索引为1
+            this.onReachEnd()
+            console.log("切换到推荐标签，开始刷新数据");
+
+          }
+        })
         .padding({ left: 5, right: 5 })
         .vertical(false)
         .height("100%");
