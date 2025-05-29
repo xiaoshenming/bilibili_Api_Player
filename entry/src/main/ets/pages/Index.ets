@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,10 @@
 import { router } from '@kit.ArkUI';
 import { CommonConstants as Const } from '../common/constants/CommonConstants';
 import { splashImages } from '../viewmodel/SplashModel';
-
+// 导入TokenManager
+import { tokenManager } from '../utils/TokenManager';
+// 【新增】导入 AbilityKit 的 common 模块
+import { common } from '@kit.AbilityKit';
 @Entry
 @Component
 struct Index {
@@ -26,6 +29,7 @@ struct Index {
   @State showSwiper: boolean = false;
   private timer: number = 0;
 
+  // aboutToAppear 保持不变
   aboutToAppear(): void {
     let data: Resource[] = [];
     let hours = new Date().getHours();
@@ -48,23 +52,43 @@ struct Index {
       this.countdown--;
       if (this.countdown === 0) {
         this.clearTiming();
-        this.jumpToMainPage();
+        // 调用新的导航决策函数
+        this.decideAndNavigate();
       }
     }, Const.DURATION);
   }
 
   clearTiming() {
-    if (this.timer !== null) {
+    if (this.timer !== null && this.timer !== 0) { // 检查条件更严谨
       clearInterval(this.timer);
       this.timer = 0;
     }
   }
 
-  jumpToMainPage() {
+  // 【核心修改】
+  // 原 jumpToMainPage() 函数被替换为 decideAndNavigate()
+  async decideAndNavigate() {
     this.clearTiming();
-    router.replaceUrl({
-      url: 'pages/MainPage'
-    });
+    // 获取UIAbility的上下文，用于读写Preferences
+    const context = AppStorage.get('uiAbilityContext') as common.UIAbilityContext;
+
+    // 检查是否存在Token
+    const token = await tokenManager.getToken(context);
+
+    if (token) {
+      // 如果有token，跳转到主页
+      // 这里可以增加一步，调用后端的/api/status接口验证token有效性，如果无效则清除token并跳转登录页
+      console.info('Token found, navigating to MainPage.');
+      router.replaceUrl({
+        url: 'pages/MainPage'
+      });
+    } else {
+      // 如果没有token，跳转到登录页
+      console.info('No token found, navigating to LoginPage.');
+      router.replaceUrl({
+        url: 'pages/LoginPage'
+      });
+    }
   }
 
   aboutToDisappear() {
@@ -83,16 +107,11 @@ struct Index {
                 .objectFit(ImageFit.Cover)
             })
           }
-
           .loop(true)
           .interval(2 * Const.DURATION)
           .duration(Const.DURATION)
           .autoPlay(true)
           .indicator(false)
-          // .indicator(Indicator.dot()
-          //   .bottom($r('app.float.100'))
-          //   .color($r('app.color.swiper_dot_color'))
-          // )
           .curve(Curve.Linear)
           .onChange((index: number) => {
             console.info(index.toString())
@@ -102,7 +121,8 @@ struct Index {
             Span($r('app.string.skip'))
             Span(`${this.countdown}`)
           }
-          .onClick(() => this.jumpToMainPage())
+          // 点击跳过按钮，也执行导航决策
+          .onClick(() => this.decideAndNavigate())
           .fontColor(Color.White)
           .fontSize($r('app.float.12fp'))
           .backgroundColor($r('app.color.swiper_jump_bg_color'))
