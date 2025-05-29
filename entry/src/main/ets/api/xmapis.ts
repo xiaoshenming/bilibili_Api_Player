@@ -6,7 +6,7 @@ interface agcookie {
 }
 export const xmapis = async (): Promise<object | null> => {
   // const url = 'https://api.aag.moe/api/bzspjx?url='+blibliurl;
-  const url = 'http://10.3.36.10:7894/videos';  // 发送请求到 Express 服务
+  const url = 'http://10.3.36.36:7894/videos';  // 发送请求到 Express 服务
   const headers: agcookie = {
     'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
