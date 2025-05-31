@@ -3,6 +3,8 @@
     "pages/Index",
     "pages/MainPage",
     "pages/VideoPlayer",
-    "pages/LoginPage"
+    "pages/LoginPage",
+    "pages/RegisterPage",
+    "pages/ForgotPasswordPage"
   ]
 }

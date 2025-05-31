@@ -50,7 +50,7 @@ struct ForgotPasswordPage {
       // await apiService.sendVerificationCode(this.email, 'reset_password');
       
       // 暂时模拟发送成功
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // await new Promise(resolve => setTimeout(resolve, 1000));
       promptAction.showToast({ message: '验证码已发送，请查收邮箱' });
       
       // 跳转到下一步
@@ -115,7 +115,7 @@ struct ForgotPasswordPage {
       // await apiService.resetPassword(this.email, this.verificationCode, this.newPassword);
       
       // 暂时模拟重置成功
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // await new Promise(resolve => setTimeout(resolve, 1000));
       promptAction.showToast({ message: '密码重置成功！请使用新密码登录' });
       
       // 延迟跳转回登录页面
@@ -276,7 +276,7 @@ struct ForgotPasswordPage {
             })
 
           Button() {
-            Image(this.isPasswordVisible ? $r('sys.media.ohos_ic_public_view_off') : $r('sys.media.ohos_ic_public_view'))
+            Image(this.isPasswordVisible ?  $r('app.media.toubi') : $r('app.media.toubi1'))
               .width(20)
               .height(20)
               .fillColor('#999999')
@@ -312,7 +312,7 @@ struct ForgotPasswordPage {
             })
 
           Button() {
-            Image(this.isConfirmPasswordVisible ? $r('sys.media.ohos_ic_public_view_off') : $r('sys.media.ohos_ic_public_view'))
+            Image(this.isConfirmPasswordVisible ? $r('app.media.toubi') : $r('app.media.toubi1'))
               .width(20)
               .height(20)
               .fillColor('#999999')

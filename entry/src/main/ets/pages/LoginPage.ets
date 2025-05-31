@@ -132,15 +132,48 @@ struct LoginPage {
         .enabled(!this.isProcessing)
         .onClick(() => this.handleSubmit())
 
-      Row({ space: 5 }) {
-        Text(this.isLoginMode ? '还没有账号？' : '已有账号？').fontSize(14).fontColor(Color.Gray)
-        Text(this.isLoginMode ? '立即注册' : '立即登录')
-          .fontSize(14)
-          .fontColor($r('app.color.widget_train_text')) // 确保这个颜色资源在您的项目中存在
-          .fontWeight(FontWeight.Medium)
-          .onClick(() => { this.isLoginMode = !this.isLoginMode; })
+      // 登录模式下的操作链接
+      if (this.isLoginMode) {
+        Column({ space: 16 }) {
+          // 忘记密码链接
+          Text('忘记密码？')
+            .fontSize(14)
+            .fontColor('#007AFF')
+            .fontWeight(FontWeight.Medium)
+            .onClick(() => {
+              router.pushUrl({ url: 'pages/ForgotPasswordPage' });
+            })
+
+          // 注册链接
+          Row({ space: 5 }) {
+            Text('还没有账号？')
+              .fontSize(14)
+              .fontColor('#666666')
+            Text('立即注册')
+              .fontSize(14)
+              .fontColor('#007AFF')
+              .fontWeight(FontWeight.Medium)
+              .onClick(() => {
+                router.pushUrl({ url: 'pages/RegisterPage' });
+              })
+          }
+        }
+        .margin({ top: 20 })
+        .alignItems(HorizontalAlign.Center)
+      } else {
+        // 注册模式下的返回登录链接
+        Row({ space: 5 }) {
+          Text('已有账号？')
+            .fontSize(14)
+            .fontColor('#666666')
+          Text('立即登录')
+            .fontSize(14)
+            .fontColor('#007AFF')
+            .fontWeight(FontWeight.Medium)
+            .onClick(() => { this.isLoginMode = !this.isLoginMode; })
+        }
+        .margin({ top: 20 })
       }
-      .margin({ top: 20 })
     }
     .width('100%').height('100%').backgroundColor(Color.White)
   }
