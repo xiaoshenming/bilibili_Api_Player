@@ -20,6 +20,8 @@ import { splashImages } from '../viewmodel/SplashModel';
 import { tokenManager } from '../utils/TokenManager';
 // 【新增】导入 AbilityKit 的 common 模块
 import { common } from '@kit.AbilityKit';
+// 【新增】导入ApiService用于状态检测
+import { apiService } from '../api/ApiService';
 @Entry
 @Component
 struct Index {
@@ -76,12 +78,30 @@ struct Index {
     const token = await tokenManager.getToken(context);
 
     if (token) {
-      // 如果有token，跳转到主页
-      // 这里可以增加一步，调用后端的/api/status接口验证token有效性，如果无效则清除token并跳转登录页
-      console.info('Token found, navigating to MainPage.');
-      router.replaceUrl({
-        url: 'pages/MainPage'
-      });
+      console.info('Token found, verifying with backend...');
+      
+      // 【新增】调用后端API验证token有效性
+      try {
+        const statusResult = await apiService.checkStatus(token);
+        
+        if (statusResult.success && statusResult.data) {
+          // Token有效，用户状态正常，跳转到主页
+          console.info('Token验证成功，用户状态正常，跳转到主页');
+          console.info(`用户信息: ${statusResult.data.name} (${statusResult.data.email})`);
+          
+          router.replaceUrl({
+            url: 'pages/MainPage'
+          });
+        } else {
+          // Token无效或用户状态异常，清除本地token并跳转到登录页
+          console.warn(`Token验证失败: ${statusResult.message || '未知错误'}`);
+          await this.handleInvalidToken(context);
+        }
+      } catch (error) {
+        // 网络错误或其他异常，清除token并跳转登录页
+        console.error('Token验证过程中发生错误:', error);
+        await this.handleInvalidToken(context);
+      }
     } else {
       // 如果没有token，跳转到登录页
       console.info('No token found, navigating to LoginPage.');
@@ -89,6 +109,23 @@ struct Index {
         url: 'pages/LoginPage'
       });
     }
+  }
+
+  // 【新增】处理无效token的统一方法
+  private async handleInvalidToken(context: common.UIAbilityContext) {
+    try {
+      // 清除本地存储的无效token
+      await tokenManager.deleteToken(context);
+      console.info('已清除无效token');
+    } catch (error) {
+      console.error('清除token时发生错误:', error);
+    }
+    
+    // 跳转到登录页
+    console.info('跳转到登录页');
+    router.replaceUrl({
+      url: 'pages/LoginPage'
+    });
   }
 
   aboutToDisappear() {
