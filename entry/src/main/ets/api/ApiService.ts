@@ -25,7 +25,8 @@ class ApiService {
 
       httpRequest.destroy();
 
-      if (response.responseCode === http.ResponseCode.OK) {
+      // 支持200 OK和201 Created状态码
+      if (response.responseCode === http.ResponseCode.OK || response.responseCode === 201) {
         const result = JSON.parse(response.result as string);
         if (result.code !== 200 && result.code !== 201) {
           throw new Error(result.message || '操作失败');
