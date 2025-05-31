@@ -17,8 +17,7 @@ struct ForgotPasswordPage {
   @State isSendingCode: boolean = false;
   @State isResetting: boolean = false;
   @State countdown: number = 0;
-  @State isPasswordVisible: boolean = false;
-  @State isConfirmPasswordVisible: boolean = false;
+
 
   private timer: number = -1;
 
@@ -262,33 +261,17 @@ struct ForgotPasswordPage {
           .fontColor('#333333')
           .alignSelf(ItemAlign.Start)
 
-        Row() {
-          TextInput({ placeholder: '请输入新密码（至少6位）' })
-            .type(this.isPasswordVisible ? InputType.Normal : InputType.Password)
-            .height(48)
-            .borderRadius(8)
-            .backgroundColor('#F5F5F5')
-            .border({ width: 1, color: Color.Transparent })
-            .layoutWeight(1)
-            .focusOnTouch(true)
-            .onChange((value) => {
-              this.newPassword = value;
-            })
-
-          Button() {
-            Image(this.isPasswordVisible ?  $r('app.media.toubi') : $r('app.media.toubi1'))
-              .width(20)
-              .height(20)
-              .fillColor('#999999')
-          }
-          .type(ButtonType.Circle)
-          .backgroundColor(Color.Transparent)
-          .width(40)
-          .height(40)
-          .onClick(() => {
-            this.isPasswordVisible = !this.isPasswordVisible;
+        TextInput({ placeholder: '请输入新密码（至少6位）' })
+          .type(InputType.Password)
+          .height(48)
+          .borderRadius(8)
+          .backgroundColor('#F5F5F5')
+          .border({ width: 1, color: Color.Transparent })
+          .focusOnTouch(true)
+          .showPasswordIcon(true)
+          .onChange((value) => {
+            this.newPassword = value;
           })
-        }
       }
 
       // 确认新密码输入
@@ -298,33 +281,17 @@ struct ForgotPasswordPage {
           .fontColor('#333333')
           .alignSelf(ItemAlign.Start)
 
-        Row() {
-          TextInput({ placeholder: '请再次输入新密码' })
-            .type(this.isConfirmPasswordVisible ? InputType.Normal : InputType.Password)
-            .height(48)
-            .borderRadius(8)
-            .backgroundColor('#F5F5F5')
-            .border({ width: 1, color: Color.Transparent })
-            .layoutWeight(1)
-            .focusOnTouch(true)
-            .onChange((value) => {
-              this.confirmPassword = value;
-            })
-
-          Button() {
-            Image(this.isConfirmPasswordVisible ? $r('app.media.toubi') : $r('app.media.toubi1'))
-              .width(20)
-              .height(20)
-              .fillColor('#999999')
-          }
-          .type(ButtonType.Circle)
-          .backgroundColor(Color.Transparent)
-          .width(40)
-          .height(40)
-          .onClick(() => {
-            this.isConfirmPasswordVisible = !this.isConfirmPasswordVisible;
+        TextInput({ placeholder: '请再次输入新密码' })
+          .type(InputType.Password)
+          .height(48)
+          .borderRadius(8)
+          .backgroundColor('#F5F5F5')
+          .border({ width: 1, color: Color.Transparent })
+          .focusOnTouch(true)
+          .showPasswordIcon(true)
+          .onChange((value) => {
+            this.confirmPassword = value;
           })
-        }
       }
 
       // 重置密码按钮

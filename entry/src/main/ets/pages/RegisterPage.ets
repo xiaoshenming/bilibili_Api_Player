@@ -20,9 +20,6 @@ struct RegisterPage {
   @State isSendingCode: boolean = false;
   @State isRegistering: boolean = false;
   @State countdown: number = 0;
-  @State isPasswordVisible: boolean = false;
-  @State isConfirmPasswordVisible: boolean = false;
-
   private timer: number = -1;
 
   aboutToDisappear() {
@@ -38,7 +35,7 @@ struct RegisterPage {
   // 发送验证码
   async sendVerificationCode() {
     if (this.isSendingCode || this.countdown > 0) return;
-    
+
     if (!this.email.trim()) {
       promptAction.showToast({ message: '请输入邮箱地址' });
       return;
@@ -55,7 +52,7 @@ struct RegisterPage {
     try {
       await apiService.sendVerificationCode(this.email, 'register');
       promptAction.showToast({ message: '验证码已发送，请查收邮箱' });
-      
+
       // 开始倒计时
       this.countdown = 60;
       this.timer = setInterval(() => {
@@ -127,14 +124,14 @@ struct RegisterPage {
   // 处理注册
   async handleRegister() {
     if (this.isRegistering) return;
-    
+
     if (!this.validateInput()) return;
 
     this.isRegistering = true;
     try {
       await apiService.register(this.name, this.email, this.password, this.verificationCode);
       promptAction.showToast({ message: '注册成功！请返回登录页面登录' });
-      
+
       // 延迟跳转，让用户看到成功提示
       setTimeout(() => {
         router.back();
@@ -247,33 +244,17 @@ struct RegisterPage {
               .fontColor('#333333')
               .alignSelf(ItemAlign.Start)
 
-            Row() {
-              TextInput({ placeholder: '请输入密码（至少6位）' })
-                .type(this.isPasswordVisible ? InputType.Normal : InputType.Password)
-                .height(48)
-                .borderRadius(8)
-                .backgroundColor('#F5F5F5')
-                .border({ width: 1, color: Color.Transparent })
-                .layoutWeight(1)
-                .focusOnTouch(true)
-                .onChange((value) => {
-                  this.password = value;
-                })
-
-              Button() {
-                Image(this.isPasswordVisible ? $r('app.media.toubi') : $r('app.media.toubi1'))
-                  .width(20)
-                  .height(20)
-                  .fillColor('#999999')
-              }
-              .type(ButtonType.Circle)
-              .backgroundColor(Color.Transparent)
-              .width(40)
-              .height(40)
-              .onClick(() => {
-                this.isPasswordVisible = !this.isPasswordVisible;
+            TextInput({ placeholder: '请输入密码（至少6位）' })
+              .type(InputType.Password)
+              .height(48)
+              .borderRadius(8)
+              .backgroundColor('#F5F5F5')
+              .border({ width: 1, color: Color.Transparent })
+              .focusOnTouch(true)
+              .showPasswordIcon(true)
+              .onChange((value) => {
+                this.password = value;
               })
-            }
           }
 
           // 确认密码输入
@@ -283,33 +264,17 @@ struct RegisterPage {
               .fontColor('#333333')
               .alignSelf(ItemAlign.Start)
 
-            Row() {
-              TextInput({ placeholder: '请再次输入密码' })
-                .type(this.isConfirmPasswordVisible ? InputType.Normal : InputType.Password)
-                .height(48)
-                .borderRadius(8)
-                .backgroundColor('#F5F5F5')
-                .border({ width: 1, color: Color.Transparent })
-                .layoutWeight(1)
-                .focusOnTouch(true)
-                .onChange((value) => {
-                  this.confirmPassword = value;
-                })
-
-              Button() {
-                Image(this.isConfirmPasswordVisible ? $r('app.media.toubi') : $r('app.media.toubi1'))
-                  .width(20)
-                  .height(20)
-                  .fillColor('#999999')
-              }
-              .type(ButtonType.Circle)
-              .backgroundColor(Color.Transparent)
-              .width(40)
-              .height(40)
-              .onClick(() => {
-                this.isConfirmPasswordVisible = !this.isConfirmPasswordVisible;
+            TextInput({ placeholder: '请再次输入密码' })
+              .type(InputType.Password)
+              .height(48)
+              .borderRadius(8)
+              .backgroundColor('#F5F5F5')
+              .border({ width: 1, color: Color.Transparent })
+              .focusOnTouch(true)
+              .showPasswordIcon(true)
+              .onChange((value) => {
+                this.confirmPassword = value;
               })
-            }
           }
 
           // 验证码输入
