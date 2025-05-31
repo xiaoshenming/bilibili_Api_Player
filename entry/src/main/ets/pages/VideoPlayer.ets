@@ -51,8 +51,8 @@ export struct VideoPlayer {
     {
       description: '总得来看看雪山吧', //标题
       head: 'http://i2.hdslb.com/bfs/archive/c4603188a8d0caa468649820dbd5750612095236.jpg', //封面URL
-      // video:'http://10.3.36.36:7894/BV1m1sue8EQc.mp4',//视频链接
-      video:'http://10.3.36.36:7894/BV1scmfYPES3.mp4',//视频链接
+      // video:'http://10.23.55.31:7894/BV1m1sue8EQc.mp4',//视频链接
+      video:'http://10.23.55.31:7894/BV1scmfYPES3.mp4',//视频链接
       bvid:'BV1xuSnYwEsr',
       name: '画渣花小烙', //UP主
       face:'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
@@ -115,7 +115,7 @@ export struct VideoPlayer {
       console.log('在线解析模式')
       blibliurl=params["videoDatas"][0]["video"]
       // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
-      this.mp4 = `http://10.3.36.36:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
+      this.mp4 = `http://10.23.55.31:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
       let items: Array<string> = params["videoDatas"];
       const item = items[0];
 
@@ -150,7 +150,7 @@ export struct VideoPlayer {
         console.info(JSON.stringify(response["downloadLink"]));
         console.info('播放量',JSON.stringify(response["data"]["current_viewers"]));
       } else {
-        this.mp4 = `http://10.3.36.36:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
+        this.mp4 = `http://10.23.55.31:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
         console.error('请求失败',this.mp4);
       }
       const updatedData: VideoData={
