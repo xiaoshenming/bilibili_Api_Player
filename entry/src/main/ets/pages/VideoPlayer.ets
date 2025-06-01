@@ -217,7 +217,7 @@ export struct VideoPlayer {
                     shareCount: String(item.shares), // 分享数
                     toubiCount: String(item.coins),
 
-                    index: item.index // 索引
+                    index: Number(item.index) // 索引
                   })
                 }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding($r('app.integer.stack_padding'))
 
