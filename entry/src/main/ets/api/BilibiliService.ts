@@ -84,6 +84,148 @@ class BilibiliService {
   }
 
   /**
+   * 处理视频 - 新的API流程
+   * @param context 应用上下文
+   * @param url 视频链接
+   * @param quality 视频质量
+   * @param downloadMode 下载模式
+   * @returns 处理结果
+   */
+  async processVideo(context: common.UIAbilityContext, url: string, quality: number = 80, downloadMode: string = 'auto'): Promise<{
+    id: number;
+    updated: boolean;
+    title: string;
+    bvid: string;
+    filePath: string;
+    playUrl: string;
+    message: string;
+    downloadMode: string;
+    qualityDesc: string;
+  } | null> {
+    try {
+      console.info('processVideo开始执行');
+      console.info('获取token...');
+      const token = await tokenManager.getToken(context);
+      if (!token) {
+        console.error('token为空，用户未登录');
+        promptAction.showToast({ message: '请先登录' });
+        return null;
+      }
+      console.info('token获取成功');
+
+      console.info('开始处理视频:', url);
+      console.info('调用apiService.processVideo...');
+      const result = await apiService.processVideo(token, url, quality, downloadMode);
+      console.info('视频处理成功:', result.title);
+      console.info('processVideo执行完成');
+      return result;
+    } catch (error) {
+      console.error('处理视频失败:', error);
+      console.error('processVideo异常详情:', JSON.stringify(error));
+      promptAction.showToast({ message: `处理失败: ${error.message}` });
+      return null;
+    }
+  }
+
+  /**
+   * 生成下载链接
+   * @param context 应用上下文
+   * @param fileName 文件名
+   * @returns 下载链接信息
+   */
+  async generateDownloadLink(context: common.UIAbilityContext, fileName: string): Promise<{
+    downloadUrl: string;
+    token: string;
+    expiresAt: string;
+  } | null> {
+    try {
+      console.info('generateDownloadLink开始执行');
+      console.info('获取token...');
+      const token = await tokenManager.getToken(context);
+      if (!token) {
+        console.error('token为空，用户未登录');
+        promptAction.showToast({ message: '请先登录' });
+        return null;
+      }
+      console.info('token获取成功');
+
+      console.info('生成下载链接:', fileName);
+      console.info('调用apiService.generateDownloadLink...');
+      const result = await apiService.generateDownloadLink(token, fileName);
+      console.info('下载链接生成成功');
+      console.info('generateDownloadLink执行完成');
+      return result;
+    } catch (error) {
+      console.error('生成下载链接失败:', error);
+      console.error('generateDownloadLink异常详情:', JSON.stringify(error));
+      promptAction.showToast({ message: `生成链接失败: ${error.message}` });
+      return null;
+    }
+  }
+
+  /**
+   * 完整的视频处理流程
+   * @param context 应用上下文
+   * @param url 视频链接
+   * @returns 可播放的视频信息
+   */
+  async processVideoComplete(context: common.UIAbilityContext, url: string): Promise<BilibiliVideoInfo | null> {
+    try {
+      console.info('processVideoComplete开始执行');
+      console.info('输入参数 - url:', url);
+      
+      // 第一步：处理视频
+      console.info('第一步：开始处理视频...');
+      const processResult = await this.processVideo(context, url);
+      console.info('视频处理结果:', processResult ? '成功' : '失败');
+      if (!processResult) {
+        console.error('视频处理失败，返回null');
+        return null;
+      }
+
+      // 第二步：生成下载链接
+      console.info('第二步：开始生成下载链接...');
+      const fileName = `${processResult.bvid}.mp4`;
+      console.info('文件名:', fileName);
+      const downloadResult = await this.generateDownloadLink(context, fileName);
+      console.info('下载链接生成结果:', downloadResult ? '成功' : '失败');
+      if (!downloadResult) {
+        console.error('下载链接生成失败，返回null');
+        return null;
+      }
+
+      // 构造返回的视频信息
+      const videoInfo: BilibiliVideoInfo = {
+        videoUrl: downloadResult.downloadUrl,
+        audioUrl: '', // 如果需要单独的音频链接，可以在这里处理
+        bvid: processResult.bvid,
+        aid: String(processResult.id),
+        cid: '0', // 如果后端返回cid，可以添加到processVideo的返回类型中
+        tname: '', // 分区名称
+        pic: '', // 封面图片
+        title: processResult.title,
+        desc: '', // 描述
+        duration: 0, // 时长
+        pubdate: 0, // 发布时间
+        name: '', // UP主名称
+        face: '', // UP主头像
+        view: 0, // 播放量
+        danmaku: 0, // 弹幕数
+        reply: 0, // 评论数
+        favorite: 0, // 收藏数
+        coin: 0, // 投币数
+        share: 0, // 分享数
+        like: 0 // 点赞数
+      };
+
+      return videoInfo;
+    } catch (error) {
+      console.error('完整视频处理流程失败:', error);
+      return null;
+    }
+  }
+
+  /**
    * 提取BVID
    * @param input 用户输入的链接或BV号
    * @returns BVID

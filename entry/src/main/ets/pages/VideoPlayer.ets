@@ -77,35 +77,58 @@ export struct VideoPlayer {
   ];
 
   async aboutToAppear() {
-    const params = router.getParams() as Record<string, ESObject>;
-    console.info('VideoPlayer params:', JSON.stringify(params));
-    
-    // 检查是否来自解析页面
-    this.fromParse = params["fromParse"] || false;
-    
-    if (params["videoDatas"] && params["videoDatas"].length > 0) {
-      // 如果来自解析页面，直接使用传入的数据
-      if (this.fromParse) {
-        const videoData = (params["videoDatas"] as VideoData[])[0];
-        this.datas.pushData(videoData);
-        console.log('使用解析页面传入的视频数据');
-      } else {
-        // 传统模式：需要重新解析视频
-        await this.parseVideoFromParams(params);
+    try {
+      console.info('VideoPlayer组件开始初始化');
+      
+      // 安全获取路由参数
+      let params: Record<string, Object> = {};
+      try {
+        params = router.getParams() as Record<string, Object> || {};
+        console.info('VideoPlayer params:', JSON.stringify(params));
+      } catch (paramError) {
+        console.error('获取路由参数失败:', paramError);
+        params = {};
       }
-    } else if (params["bvidflag"]) {
-      // 如果有bvidflag参数，调用解析方法
-      console.info('检测到bvidflag参数，开始解析视频');
-      await this.parseVideoFromParams(params);
-    } else {
-      // 加载默认视频数据
-      console.info('没有视频参数，加载默认视频');
+      
+      // 检查是否来自解析页面
+      this.fromParse = Boolean(params["fromParse"]) || false;
+      
+      if (params["videoDatas"] && Array.isArray(params["videoDatas"]) && params["videoDatas"].length > 0) {
+        // 如果来自解析页面，直接使用传入的数据
+        if (this.fromParse) {
+          try {
+            const videoData = (params["videoDatas"] as VideoData[])[0];
+            this.datas.pushData(videoData);
+            console.log('使用解析页面传入的视频数据');
+          } catch (dataError) {
+            console.error('处理传入视频数据失败:', dataError);
+            this.loadDefaultVideos();
+          }
+        } else {
+          // 传统模式：需要重新解析视频
+          await this.parseVideoFromParams(params);
+        }
+      } else if (params["bvidflag"] && typeof params["bvidflag"] === 'string') {
+        // 如果有bvidflag参数，调用解析方法
+        console.info('检测到bvidflag参数，开始处理视频');
+        await this.parseVideoFromParams(params);
+      } else {
+        // 加载默认视频数据
+        console.info('没有视频参数，加载默认视频');
+        this.loadDefaultVideos();
+      }
+      
+      console.info('VideoPlayer组件初始化完成');
+    } catch (error) {
+      console.error('VideoPlayer组件初始化失败:', error);
+      console.error('初始化错误详情:', JSON.stringify(error));
+      // 确保即使出错也能显示默认视频
       this.loadDefaultVideos();
     }
   }
 
-  // 从参数解析视频
-  private async parseVideoFromParams(params: Record<string, ESObject>) {
+  // 从参数解析视频 - 使用新的API流程
+  private async parseVideoFromParams(params: Record<string, Object>) {
     this.isLoading = true;
     
     try {
@@ -114,26 +137,39 @@ export struct VideoPlayer {
       
       if (bvidflag) {
         const blibliurl = `https://www.bilibili.com/video/${bvidflag}`;
-        console.info('开始解析视频:', blibliurl);
+        console.info('开始处理视频:', blibliurl);
         
-        // 检查token状态
+        // 检查context和token状态
         console.info('准备获取token...');
+        if (!this.context) {
+          console.error('应用上下文不存在，无法获取token');
+          this.loadDefaultVideos();
+          return;
+        }
+        
         let token: string | null = null;
         try {
-          console.info('获取前');
-          token = await tokenManager.getToken(this.context);
+          console.info('获取token中...');
+          // 添加超时保护
+          const tokenPromise = tokenManager.getToken(this.context);
+          const timeoutPromise = new Promise<null>((_, reject) => {
+            setTimeout(() => reject(new Error('获取token超时')), 5000);
+          });
+          
+          token = await Promise.race([tokenPromise, timeoutPromise]);
           console.info('token获取完成，状态:', token ? '已登录' : '未登录');
         } catch (tokenError) {
           console.error('获取token时出错:', tokenError);
           console.error('token错误详情:', JSON.stringify(tokenError));
+          promptAction.showToast({ message: '获取登录状态失败，请重试' });
           this.loadDefaultVideos();
           return;
         }
         
         if (!token) {
-          console.error('用户未登录，无法解析视频');
+          console.error('用户未登录，无法处理视频');
           try {
-            promptAction.showToast({ message: '请先登录后再解析视频' });
+            promptAction.showToast({ message: '请先登录后再播放视频' });
           } catch (toastError) {
             console.error('显示toast时出错:', toastError);
           }
@@ -141,47 +177,70 @@ export struct VideoPlayer {
           return;
         }
         
-        console.info('开始调用后端API解析视频...');
+        console.info('开始调用新的视频处理流程...');
+        console.info('调用参数 - context:', this.context ? '存在' : '不存在');
+        console.info('调用参数 - url:', blibliurl);
+        
         let result: BilibiliVideoInfo | null = null;
         try {
-          result = await bilibiliService.parseVideoDetails(this.context, blibliurl);
-          console.info('API调用结果:', result ? '成功' : '失败');
+          console.info('准备调用processVideoComplete...');
+          // 使用新的完整视频处理流程，添加超时保护
+          const apiPromise = bilibiliService.processVideoComplete(this.context, blibliurl);
+          const timeoutPromise = new Promise<null>((_, reject) => {
+            setTimeout(() => reject(new Error('视频处理超时，请检查网络连接')), 30000); // 30秒超时
+          });
+          
+          console.info('开始等待API响应...');
+          result = await Promise.race([apiPromise, timeoutPromise]);
+          console.info('视频处理流程结果:', result ? '成功' : '失败');
+          console.info('API调用完成，准备处理结果...');
         } catch (apiError) {
-          console.error('调用API时出错:', apiError);
+          console.error('调用视频处理流程时出错:', apiError);
           console.error('API错误详情:', JSON.stringify(apiError));
+          
+          // 根据错误类型显示不同的提示
+          let errorMessage = '视频处理失败';
+          if (apiError.message.includes('超时')) {
+            errorMessage = '网络连接超时，请检查网络后重试';
+          } else if (apiError.message.includes('401')) {
+            errorMessage = '登录已过期，请重新登录';
+          } else if (apiError.message.includes('网络')) {
+            errorMessage = '网络连接失败，请检查网络设置';
+          }
+          
+          promptAction.showToast({ message: errorMessage });
           this.loadDefaultVideos();
           return;
         }
         
         if (result) {
-          console.info('解析到的视频信息:', {
+          console.info('视频处理成功，信息:', {
             title: result.title,
             bvid: result.bvid,
-            videoUrl: result.videoUrl ? '有视频链接' : '无视频链接',
-            audioUrl: result.audioUrl ? '有音频链接' : '无音频链接'
+            videoUrl: result.videoUrl ? '有视频链接' : '无视频链接'
           });
           
           try {
             const videoData: VideoData = {
-              description: result.title,
-              head: result.pic,
+              description: result.title || '未知标题',
+              head: result.pic || $r('app.media.photo35'), // 使用默认封面
               video: result.videoUrl,
               audioUrl: result.audioUrl,
               bvid: result.bvid,
-              aid: String(result.aid),
-              cid: String(result.cid),
-              name: result.name,
-              face: result.face,
-              view: String(result.view),
-              like: String(result.like),
-              barrage: String(result.danmaku),
-              time: String(result.duration),
-              pubdate: String(result.pubdate),
-              coins: String(result.coin),
-              favorites: String(result.favorite),
-              shares: String(result.share),
-              reply: String(result.reply),
-              tname: result.tname,
+              aid: String(result.aid || '0'),
+              cid: String(result.cid || '0'),
+              name: result.name || '未知UP主',
+              face: result.face || 'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
+              view: String(result.view || '0'),
+              like: String(result.like || '0'),
+              barrage: String(result.danmaku || '0'),
+              time: String(result.duration || '0'),
+              pubdate: String(result.pubdate || '0'),
+              coins: String(result.coin || '0'),
+              favorites: String(result.favorite || '0'),
+              shares: String(result.share || '0'),
+              reply: String(result.reply || '0'),
+              tname: result.tname || '未知分区',
               controller: this.myController,
               auto: false,
               play: false,
@@ -189,14 +248,14 @@ export struct VideoPlayer {
             };
             
             this.datas.pushData(videoData);
-            console.log('视频解析成功，已添加到播放列表');
+            console.log('视频处理成功，已添加到播放列表');
           } catch (dataError) {
             console.error('创建视频数据时出错:', dataError);
             console.error('数据错误详情:', JSON.stringify(dataError));
             this.loadDefaultVideos();
           }
         } else {
-          console.error('视频解析失败：API返回空结果');
+          console.error('视频处理失败：API返回空结果');
           this.loadDefaultVideos();
         }
       } else {
@@ -204,7 +263,7 @@ export struct VideoPlayer {
         this.loadDefaultVideos();
       }
     } catch (error) {
-      console.error('解析视频时出现未捕获的错误:', error);
+      console.error('处理视频时出现未捕获的错误:', error);
       console.error('未捕获错误详情:', JSON.stringify(error));
       console.error('错误堆栈:', error.stack);
       this.loadDefaultVideos();
@@ -216,16 +275,35 @@ export struct VideoPlayer {
 
   // 加载默认视频
   private loadDefaultVideos() {
-    // 把默认视频数据加载进datas对象中
-    for (let index = 0; index < this.videoDatas.length; index++) {
-      this.datas.pushData(this.videoDatas[index]);
+    try {
+      console.info('开始加载默认视频数据');
+      // 把默认视频数据加载进datas对象中
+      if (this.videoDatas && Array.isArray(this.videoDatas)) {
+        for (let index = 0; index < this.videoDatas.length; index++) {
+          if (this.videoDatas[index]) {
+            this.datas.pushData(this.videoDatas[index]);
+          }
+        }
+        console.info(`成功加载${this.videoDatas.length}个默认视频`);
+      } else {
+        console.error('默认视频数据不存在或格式错误');
+      }
+    } catch (error) {
+      console.error('加载默认视频失败:', error);
+      console.error('默认视频加载错误详情:', JSON.stringify(error));
     }
   }
   onPageShow(): void {
-    this.datas.getData(this.index).controller.start();
+    const currentData = this.datas.getData(this.index);
+    if (currentData && currentData.controller) {
+      currentData.controller.start();
+    }
   }
   onPageHide(): void {
-    this.datas.getData(this.index).controller.pause();
+    const currentData = this.datas.getData(this.index);
+    if (currentData && currentData.controller) {
+      currentData.controller.pause();
+    }
   }
 
   build() {
@@ -247,26 +325,35 @@ export struct VideoPlayer {
                     .loop(true)
                     .autoPlay(item.auto)// .controls(false)
                     .onPrepared((err) => {
-
-                      item.controller.start();
-                    })
-                    .onStart(() => {
-                      item.play = true;
-                      this.playBoo = this.datas.getData(this.index).play;
-                    })
-                    .onPause(() => {
-                      item.play = false;
-                      this.playBoo = this.datas.getData(this.index).play;
-                    })
-                    .onClick(() => {
-                      if (item.play) {
-                        item.controller.pause();
-                      } else {
+                      if (item && item.controller) {
                         item.controller.start();
                       }
                     })
+                    .onStart(() => {
+                      item.play = true;
+                      const currentData = this.datas.getData(this.index);
+                      if (currentData) {
+                        this.playBoo = currentData.play;
+                      }
+                    })
+                    .onPause(() => {
+                      item.play = false;
+                      const currentData = this.datas.getData(this.index);
+                      if (currentData) {
+                        this.playBoo = currentData.play;
+                      }
+                    })
+                    .onClick(() => {
+                      if (item && item.controller) {
+                        if (item.play) {
+                          item.controller.pause();
+                        } else {
+                          item.controller.start();
+                        }
+                      }
+                    })
                     .onVisibleAreaChange([0.0, 1.0], (isVisisble: boolean, currentRatio: number) => {
-                      if (isVisisble && currentRatio >= 1.0) {
+                      if (isVisisble && currentRatio >= 1.0 && item && item.controller) {
                         item.controller.start();
                         this.totalindex = String(item.total || '0');
                       }
@@ -341,9 +428,11 @@ export struct VideoPlayer {
                   .height($r('app.integer.play_icon_size'))
                   .width($r('app.integer.play_icon_size'))
                   .onClick(() => {
-                    item.controller.start();
-                    item.play = true;
-                    this.playBoo = true;
+                    if (item && item.controller) {
+                      item.controller.start();
+                      item.play = true;
+                      this.playBoo = true;
+                    }
                   })
               }
             }.width(Const.FULL_SIZE).height(Const.FULL_SIZE).padding($r('app.integer.stack_padding'))

@@ -135,6 +135,44 @@ class ApiService {
     });
   }
 
+  // 视频处理接口 - 根据用户提供的API流程
+  processVideo(token: string, url: string, quality: number = 80, downloadMode: string = 'auto'): Promise<{
+    id: number;
+    updated: boolean;
+    title: string;
+    bvid: string;
+    filePath: string;
+    playUrl: string;
+    message: string;
+    downloadMode: string;
+    qualityDesc: string;
+  }> {
+    return this.request('/video/process', {
+      method: http.RequestMethod.POST,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      },
+      extraData: JSON.stringify({ url, quality, downloadMode })
+    });
+  }
+
+  // 生成下载链接接口
+  generateDownloadLink(token: string, fileName: string): Promise<{
+    downloadUrl: string;
+    token: string;
+    expiresAt: string;
+  }> {
+    return this.request('/video/generate-download-link', {
+      method: http.RequestMethod.POST,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      },
+      extraData: JSON.stringify({ fileName })
+    });
+  }
+
   // 获取B站账号列表
   getBilibiliAccounts(token: string): Promise<Array<{
     id: string;

@@ -108,11 +108,17 @@ export struct Home {
   }
 
   onPageShow(): void {
-    this.datas.getData(this.index).controller.start();
+    const currentData = this.datas.getData(this.index);
+    if (currentData && currentData.controller) {
+      currentData.controller.start();
+    }
   }
 
   onPageHide(): void {
-    this.datas.getData(this.index).controller.pause();
+    const currentData = this.datas.getData(this.index);
+    if (currentData && currentData.controller) {
+      currentData.controller.pause();
+    }
   }
 
   build() {
