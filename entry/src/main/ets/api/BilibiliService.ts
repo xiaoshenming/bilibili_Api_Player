@@ -1,13 +1,12 @@
 // B站服务类 - 处理B站相关的业务逻辑
 
-import { ApiService } from './ApiService';
-import { tokenManager } from '../utils/TokenManager';
-import { BilibiliVideoInfo, BilibiliAccount } from '../Model/VideoData';
-import { common } from '@kit.AbilityKit';
+import { apiService } from './ApiService';
+import type { VideoData, BilibiliVideoInfo, BilibiliAccount } from '../Model/VideoData';
 import { promptAction } from '@kit.ArkUI';
+import { tokenManager } from '../utils/TokenManager';
+import { common } from '@kit.AbilityKit';
 
 class BilibiliService {
-  private apiService = new ApiService();
 
   /**
    * 解析B站视频链接，获取基本信息
@@ -30,7 +29,7 @@ class BilibiliService {
         return null;
       }
 
-      const result = await this.apiService.parseVideo(token, input);
+      const result = await apiService.parseVideo(token, input);
       return result;
     } catch (error) {
       console.error('解析视频失败:', error);
@@ -53,7 +52,7 @@ class BilibiliService {
         return null;
       }
 
-      const result = await this.apiService.parseVideoDetails(token, input);
+      const result = await apiService.parseVideoDetails(token, input);
       return result;
     } catch (error) {
       console.error('解析视频详情失败:', error);
@@ -75,7 +74,7 @@ class BilibiliService {
         return [];
       }
 
-      const accounts = await this.apiService.getBilibiliAccounts(token);
+      const accounts = await apiService.getBilibiliAccounts(token);
       return accounts;
     } catch (error) {
       console.error('获取B站账号列表失败:', error);

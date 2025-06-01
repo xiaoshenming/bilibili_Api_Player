@@ -1,8 +1,9 @@
 import { MyDataSource } from '../Model/MyDataSource';
-import { VideoData } from '../Model/VideoData';
-import { requestSelf } from '../api/bliblihome'; // 确保路径正确
-import http from '@ohos.net.http';
+import { VideoData, BilibiliAccount } from '../Model/VideoData';
+import { bilibiliService } from '../api/BilibiliService';
 import { promptAction, router } from '@kit.ArkUI';
+import { tokenManager } from '../utils/TokenManager';
+import { common } from '@kit.AbilityKit';
 
 
 
@@ -27,9 +28,11 @@ export struct Home {
   private myController: VideoController = new VideoController();
   private datas: MyDataSource = new MyDataSource();
   @State index: number = 0;
-  @State apiResponse: object = []; // 存储原始 API 响应
+  @State bilibiliAccounts: BilibiliAccount[] = []; // 存储哔哩哔哩账号列表
   @State loadingMore: boolean = false; // 用于指示是否正在加载更多数据
   @State bottomTabIndex: number = 1;
+  @State isLoading: boolean = false;
+  @State errorMessage: string = '';
 
   @Styles
   listCard() {
@@ -40,64 +43,75 @@ export struct Home {
   }
 
   async aboutToAppear() {
-    await this.loadData(); // 加载初始数据
+    await this.loadBilibiliAccounts(); // 加载哔哩哔哩账号数据
   }
 
-  // 加载数据的公共方法
-  private async loadData() {
-    // const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
-    const sessdata = 'ab9d6d14%2C1746252800%2C9f8a2%2Ab1CjDy9wFwCOPazj3xO5hhngHPdK3Iy0kaicJX2rOm6GhJYUynqJTtckHDkSZAPDFjGZoSVjdkVWUxN1VYZlBuYUp3a291eDdLOVl3VnRKV0l3UUJnZHNSRTY2T3ppWkphbkhLeU1fc05DYVZVb3Ywd1h2eTd6U1hkWnZZTlNCdXR1OUIybzM1clh3IIEC'; // 替换成实际的 SESSDATA
-    const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
-
-    if (response) {
-      this.apiResponse = response; // 存储原始响应结果
-      this.parseApiResponse(response); // 解析响应并存储视频数据
-    } else {
-      console.error('请求失败');
-    }
-  }
-
-  private parseApiResponse(response: object) {
-    console.info(JSON.stringify(response));
-    if (response["code"] === 0 && response["data"]["item"]) {
-      const items:Array<string> = response["data"]["item"];
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-
-        this.datas.pushData({
-          description: item["title"], // 标题
-          head: item["pic"], // 封面URL
-          video: item["uri"], // 视频链接
-          bvid:item["bvid"],//地址
-          name: item["owner"]["name"], // UP主
-          face:item["owner"]["face"],
-          view: item["stat"]["view"], // 播放量
-          total:'55555',
-          like:item["stat"]["like"],//点赞
-          barrage: item["stat"]["danmaku"], // 弹幕数
-          time: item["duration"], // 时长
-          pubdate:item["pubdate"],//发布时间
-          coins: '55555',//投币
-          favorites: '55555',//收藏
-          shares: '55555',//转发
-          controller: this.myController,
-          auto:true,
-          play:true,
-          index:0,
-        });
+  // 加载哔哩哔哩账号数据
+  private async loadBilibiliAccounts() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      const token = await tokenManager.getToken(context) as string;
+      if (!token) {
+        this.errorMessage = '请先登录';
+        return;
       }
-    } else {
-      console.error('API 响应错误或数据缺失');
+      const accounts = await bilibiliService.getBilibiliAccounts(context);
+      if (accounts && accounts.length > 0) {
+        this.bilibiliAccounts = accounts;
+        // 为每个账号创建一个虚拟的视频数据项用于显示
+        this.createAccountDisplayItems();
+      } else {
+        this.errorMessage = '暂无哔哩哔哩账号数据';
+      }
+    } catch (error) {
+      console.error('加载账号数据失败:', error);
+      this.errorMessage = '加载账号数据失败，请重试';
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  // 列表到底部时触发
-  private async onReachEnd() {
-    if (this.loadingMore) return; // 避免重复加载
-    this.loadingMore = true; // 设置为加载中
+  // 为账号创建显示项
+  private createAccountDisplayItems() {
+    this.datas.clearData();
+    
+    this.bilibiliAccounts.forEach((account, index) => {
+      this.datas.pushData({
+        description: `${account.uname} 的账号`, // 标题
+        head: account.face || '', // 头像
+        video: '', // 暂无视频链接
+        bvid: '',
+        name: account.uname || '', // 用户名
+        face: account.face || '', // 头像
+        view: String(account.follower || 0), // 粉丝数作为播放量显示
+         total: '0',
+         like: '0',
+         barrage: '0',
+         time: '账号信息',
+         pubdate: account.sign || '暂无签名',
+         coins: '0',
+         favorites: '0',
+         shares: '0',
+        controller: this.myController,
+        auto: false,
+        play: false,
+        index: String(index),
+        // 新增字段
+         audioUrl: '',
+         aid: String(account.id || 0),
+         cid: String(account.id || 0),
+         reply: '0',
+         tname: '账号'
+      });
+    });
+  }
 
-    await this.loadData(); // 重新加载数据
+  // 刷新数据
+  private async refreshData() {
+    await this.loadBilibiliAccounts();
 
     this.loadingMore = false; // 重置加载状态
   }
@@ -113,85 +127,130 @@ export struct Home {
   build() {
     Scroll() {
       Column() {
-        Text("在线首页api获取")
+        Text("哔哩哔哩账号管理")
           .width("100%")
           .height("10%")
           .backgroundColor('#0080DC')
-          .textAlign(TextAlign.Center);
+          .textAlign(TextAlign.Center)
+          .fontColor(Color.White)
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold);
         Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex})
         {
           TabContent() {
           }.tabBar("直播");
 
           TabContent() {
-            List({ space: 5 }) {
-              LazyForEach(this.datas, (item: VideoData, index: number) => {
-                ListItem() {
-                  RelativeContainer() {
-                    Image(item.head)
-                      .width('100%')
-                      .height(130)   // 设置固定高度
-                      .aspectRatio(0)
-                      .objectFit(ImageFit.Cover)
-                      .alignRules({
-                        top: { anchor: "__container__", align: VerticalAlign.Top },
-                        left: { anchor: "__container__", align: HorizontalAlign.Start }
-                      })
-                      .id("image1")
+            if (this.isLoading) {
+              Column() {
+                LoadingProgress()
+                  .width(50)
+                  .height(50)
+                  .color('#0080DC')
+                Text('加载中...')
+                  .fontSize(16)
+                  .fontColor('#666666')
+                  .margin({ top: 10 })
+              }
+              .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+            } else if (this.errorMessage) {
+              Column() {
+                Text(this.errorMessage)
+                  .fontSize(16)
+                  .fontColor('#FF6B6B')
+                  .textAlign(TextAlign.Center)
+                  .margin({ bottom: 20 })
+                Button('重试')
+                  .onClick(() => {
+                    this.refreshData()
+                  })
+                  .backgroundColor('#0080DC')
+                  .fontColor(Color.White)
+              }
+              .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+            } else {
+              List({ space: 5 }) {
+                LazyForEach(this.datas, (item: VideoData, index: number) => {
+                  ListItem() {
+                    RelativeContainer() {
+                      Image(item.head)
+                        .width('100%')
+                        .height(130)
+                        .aspectRatio(0)
+                        .objectFit(ImageFit.Cover)
+                        .alignRules({
+                          top: { anchor: "__container__", align: VerticalAlign.Top },
+                          left: { anchor: "__container__", align: HorizontalAlign.Start }
+                        })
+                        .id("image1")
+                        .borderRadius({ topLeft: 5, topRight: 5 })
 
+                      Text(item.description)
+                        .fontSize(14)
+                        .padding({ top: 10, left: 10, bottom: 10 })
+                        .fontWeight(FontWeight.Normal)
+                        .letterSpacing(1)
+                        .lineHeight(20)
+                        .maxLines(2)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        .alignRules({
+                          top: { anchor: "image1", align: VerticalAlign.Bottom },
+                          left: { anchor: "image1", align: HorizontalAlign.Start }
+                        })
 
-                    Text(item.description)
-                      .fontSize(14)
-                      .padding({ top: 10, left: 10, bottom: 10 })
-                      .fontWeight(FontWeight.Normal)
-                      .letterSpacing(2)
-                      .lineHeight(20)
-                      .maxLines(2)  // 设置最多两行
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      .alignRules({
-                        top: { anchor: "image1", align: VerticalAlign.Bottom },
-                        left: { anchor: "image1", align: HorizontalAlign.Start }
-                      });
-
-                    Text(item.name)
-                      .fontSize(12)
-                      .letterSpacing(2)
-                      .fontColor(Color.Gray)
-                      .fontWeight(FontWeight.Normal)
-                      .padding({ left: 10, bottom: 10, top: 10 })
+                      Row() {
+                        Text(item.name)
+                          .fontSize(12)
+                          .fontColor('#666666')
+                          .fontWeight(FontWeight.Normal)
+                        
+                        Text(`粉丝: ${item.view}`)
+                          .fontSize(12)
+                          .fontColor('#999999')
+                          .margin({ left: 10 })
+                      }
+                      .padding({ left: 10, bottom: 10, top: 5 })
                       .alignRules({
                         bottom: { anchor: "__container__", align: VerticalAlign.Bottom },
                         left: { anchor: "__container__", align: HorizontalAlign.Start }
+                      })
+                    }
+                    .onClick(() => {
+                      // 点击账号项，可以添加账号相关操作
+                      console.log(`选择账号: ${item.name}`);
+                      promptAction.showToast({
+                        message: `选择了账号: ${item.name}`,
+                        duration: 2000
                       });
+                    })
+                    .borderRadius(8)
+                    .width('100%')
+                    .height(225)
+                    .backgroundColor('#ffffff')
+                    .shadow({
+                      radius: 4,
+                      color: '#1F000000',
+                      offsetX: 0,
+                      offsetY: 2
+                    })
                   }
-                  .onClick(() => {
-                    //点击之后跳转到Videoplay
-                    console.log(`视频名称: ${item.description}`);
-                    console.log(`地址: ${item.head}`);
-                    router.pushUrl({ url: "pages/VideoPlayer", params: { videoDatas: [item] } });
-                  })
-                  .borderRadius(5)
-                  .width('100%')
+                  .borderRadius(8)
                   .height(225)
-                  .backgroundColor('#ffffff');
-                }
-                .borderRadius(5)
-                .height(225);
-              });
-            }
-            .onReachEnd(() => {
-              this.onReachEnd()
-              console.log('触底')
-            })
-            .cachedCount(6)
-            .lanes(2, 5)
-            .width("100%")
-            .edgeEffect(EdgeEffect.Spring)
+                  .margin({ bottom: 5 })
+                })
+              }
+               .cachedCount(6)
+               .lanes(2, 5)
+               .width("100%")
+               .edgeEffect(EdgeEffect.Spring)
+             }
             // .edgeEffect(EdgeEffect.None)//听说可以防止反弹二次触发
-            .nestedScroll({
-              scrollForward: NestedScrollMode.PARENT_FIRST,
-              scrollBackward: NestedScrollMode.SELF_FIRST
-            });
 
           }.tabBar("推荐")
 
@@ -210,9 +269,9 @@ export struct Home {
         }
         .onChange((newIndex) => {
           console.log(`当前选择的Tab索引: ${newIndex}`);
-          // 判断是否切换到“推荐”标签
-          if (newIndex === 1) { // 假设“推荐”对应索引为1
-            this.onReachEnd()
+          // 判断是否切换到"推荐"标签
+          if (newIndex === 1) { // 假设"推荐"对应索引为1
+            this.refreshData()
             console.log("切换到推荐标签，开始刷新数据");
 
           }

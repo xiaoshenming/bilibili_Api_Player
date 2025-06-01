@@ -37,4 +37,11 @@ export class MyDataSource extends BasicDataSource{
       console.error('Index out of bounds');
     }
   }
+
+  // 清空所有数据
+  public clearData(): void {
+    const length = this.dataArray.length;
+    this.dataArray = [];
+    this.notifyDataChange(0);
+  }
 }

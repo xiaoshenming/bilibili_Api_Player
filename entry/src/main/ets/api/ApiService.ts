@@ -83,6 +83,75 @@ class ApiService {
     });
   }
 
+  // B站视频解析接口
+  parseVideo(token: string, input: string): Promise<{
+    bvid: string;
+    cid: string;
+    title: string;
+    desc: string;
+    type: string;
+    play_info: any;
+  }> {
+    return this.request('/bilibili/parse-video', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      },
+      extraData: `input=${encodeURIComponent(input)}`
+    });
+  }
+
+  // B站视频详细信息解析接口（包含下载链接）
+  parseVideoDetails(token: string, input: string): Promise<{
+    videoUrl: string;
+    audioUrl: string;
+    bvid: string;
+    aid: string;
+    cid: string;
+    tname: string;
+    pic: string;
+    title: string;
+    desc: string;
+    duration: number;
+    pubdate: number;
+    name: string;
+    face: string;
+    view: number;
+    danmaku: number;
+    reply: number;
+    favorite: number;
+    coin: number;
+    share: number;
+    like: number;
+  }> {
+    return this.request('/bilibili/parse-videos', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      },
+      extraData: `input=${encodeURIComponent(input)}`
+    });
+  }
+
+  // 获取B站账号列表
+  getBilibiliAccounts(token: string): Promise<Array<{
+    id: string;
+    nickname: string;
+    avatar: string;
+    is_active: boolean;
+    created_at: string;
+  }>> {
+    return this.request('/bilibili/accounts', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      }
+    });
+  }
+
   // 【新增】检查用户登录状态和Token有效性
   async checkStatus(token: string): Promise<{
     success: boolean;

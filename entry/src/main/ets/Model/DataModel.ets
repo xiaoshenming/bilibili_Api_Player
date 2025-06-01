@@ -30,7 +30,7 @@ export interface VideoData {
   shareCount: string;
   hotspot: string;
   play: boolean;
-  index: number;
+  index: string;
 }
 
 // A subclass inheriting from BasicDataSource has overridden the methods.

@@ -80,7 +80,7 @@ export struct Dynamic {
           controller: this.myController,
           auto:true,
           play:true,
-          index:i,
+          index: String(i),
         });
 
         const updatedData: VideoData={
@@ -102,7 +102,7 @@ export struct Dynamic {
           controller: this.myController,
           auto:true,
           play:true,
-          index:i,
+          index: String(i),
         }
         this.datas.updateDataAtIndex(i, updatedData);
 

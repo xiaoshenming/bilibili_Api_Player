@@ -1,28 +1,31 @@
 import { CommonConstants as Const } from '../common/CommonConstants';
 import { MyDataSource } from '../Model/MyDataSource';
-import { VideoData } from '../Model/VideoData';
-// import { Param } from '@ohos/hypium';
-import { router,curves } from '@kit.ArkUI';
+import { VideoData, BilibiliVideoInfo } from '../Model/VideoData';
+import { router, curves } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
-import { xmapi } from '../api/xmapi'; // 确保路径正确
-import { Side,VideoDes } from '../view/Side';
+import { bilibiliService } from '../api/BilibiliService';
+import { Side, VideoDes } from '../view/Side';
 import { TopTabContent } from '../Model/DataModel';
+import { common } from '@kit.AbilityKit';
 let videoIndex: number = 0;
 
 @Entry
 @Component
 export struct VideoPlayer {
   private swiperController: SwiperController = new SwiperController();
-  private myController:VideoController =new VideoController();
-  private datas:MyDataSource =new MyDataSource();
-  @State playBoo:boolean=true;
-  @State localonline:boolean=true;
-  @State index:number =0;
-  @State totalindex:string = '111';
+  private myController: VideoController = new VideoController();
+  private datas: MyDataSource = new MyDataSource();
+  @State playBoo: boolean = true;
+  @State localonline: boolean = true;
+  @State index: number = 0;
+  @State totalindex: string = '111';
   @State currentIndex: number = 1;
-  @State mp4:string='';
+  @State mp4: string = '';
+  @State isLoading: boolean = false;
+  @State fromParse: boolean = false; // 标识是否来自解析页面
   scroller: Scroller = new Scroller();
   private topTabListData: TopTabContent = new TopTabContent();
+  private context = getContext(this) as common.UIAbilityContext;
 
   controller: webview.WebviewController = new webview.WebviewController();
   videoDatas: Array<VideoData> = [
@@ -46,7 +49,7 @@ export struct VideoPlayer {
       controller: this.myController,
       auto:false,
       play:false,
-      index:0,
+      index: '0',
     },
     {
       description: '总得来看看雪山吧', //标题
@@ -68,190 +71,94 @@ export struct VideoPlayer {
       controller: this.myController,
       auto:false,
       play:false,
-      index:1,
+      index: '1',
     },
   ];
 
   async aboutToAppear() {
-    let blibliurl=''; // 替换成实际的 SESSDATA
-    // let mp4='';
-    let itemss=[];
-    let bvidflag='';
-    // //把数组VideoDatas中的元素加载进datas对象中
-    // for (let index = 0; index < this.videoDatas.length; index++) {
-    //   this.datas.pushData(this.videoDatas[index]);
-    // }
-
-
-
-    const params: object = router.getParams();
-    console.info(JSON.stringify(params));
-    console.info(JSON.stringify(params["videoDatas"]));
-    console.info(JSON.stringify(params["bvidflag"]));
-    // console.info(JSON.stringify(params["videoDatas"][0]["description"]));
-
-    // blibliurl=params["videoDatas"][0]["video"]
-    // blibliurl='https://www.bilibili.com/video/BV1yRS3YqETN';
-    blibliurl = `https://www.bilibili.com/video/${params["bvidflag"]}`;
-
-    console.info('地址获取'+blibliurl)
-
-
-
-    if(params["videoDatas"].length==1){
-
-      //把数组VideoDatas中的元素加载进datas对象中
-      for (let index = 0; index < this.videoDatas.length; index++) {
-        this.datas.pushData(this.videoDatas[index]);
-      }
-
-
-
-
-
-
-
-      this.localonline=true
-      console.log('在线解析模式')
-      blibliurl=params["videoDatas"][0]["video"]
-      // blibliurl='https://www.bilibili.com/video/BV1u54y1W7ga';
-      this.mp4 = `http://10.23.55.31:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
-      let items: Array<string> = params["videoDatas"];
-      const item = items[0];
-
-
-      this.datas.pushData({
-        description: item["description"], // 标题
-        head: item["head"], // 封面URL
-        video: this.mp4, // 视频链接
-        bvid: item["bvid"],
-        name: item["name"], // UP主
-        face: item["face"],
-        view:  item["view"], // 播放量
-        total:'55555', //当前观看人数
-        like: item["like"],
-        barrage:item["barrage"], // 弹幕数
-        time: item["time"], // 时长
-        pubdate: item["pubdate"],
-        coins:'55555', //投币
-        favorites: '55555', //收藏
-        shares:'55555', //转发
-        controller: this.myController,
-        auto: false,
-        play: false,
-        index: 2,
-      });
-
-      const response = await xmapi(blibliurl);
-      if (response) {
-        console.info(JSON.stringify(response));
-        this.mp4=response["downloadLink"]
-        itemss = response["data"];
-        console.info(JSON.stringify(response["downloadLink"]));
-        console.info('播放量',JSON.stringify(response["data"]["current_viewers"]));
+    const params = router.getParams() as Record<string, ESObject>;
+    console.info('VideoPlayer params:', JSON.stringify(params));
+    
+    // 检查是否来自解析页面
+    this.fromParse = params["fromParse"] || false;
+    
+    if (params["videoDatas"] && params["videoDatas"].length > 0) {
+      // 如果来自解析页面，直接使用传入的数据
+      if (this.fromParse) {
+        const videoData = (params["videoDatas"] as VideoData[])[0];
+        this.datas.pushData(videoData);
+        console.log('使用解析页面传入的视频数据');
       } else {
-        this.mp4 = `http://10.23.55.31:7894/${params["videoDatas"][0]["bvid"]}.mp4`;
-        console.error('请求失败',this.mp4);
+        // 传统模式：需要重新解析视频
+        await this.parseVideoFromParams(params);
       }
-      const updatedData: VideoData={
-          description: item["description"], // 标题
-          head: item["pic"], // 封面URL
-          video: this.mp4, // 视频链接
-          bvid: item["bvid"],
-          name: item["name"], // UP主
-          face: item["face"],
-          view: itemss["view"], // 播放量
-          total: itemss["current_viewers"]??5, //当前观看人数
-          like: item["like"],
-          barrage: itemss["danmaku"], // 弹幕数
-          time: item["time"], // 时长
-          pubdate: itemss["pubdate"],
-          coins: itemss["coin"], //投币
-          favorites: itemss["favorite"], //收藏
-          shares:itemss["share"], //转发
-          controller: this.myController,
-          auto: false,
-          play: false,
-          index: 2,
-        }
-      this.datas.updateDataAtIndex(2, updatedData);
-    }else{
-      this.localonline=false
-      console.log('缓存加载模式')
-
-      xmapi(blibliurl);
-      let items: Array<string> = params["videoDatas"];
-
-      // 判断是否需要将视频数据根据 bvidflag 排序
-      if (params["bvidflag"]) {
-         bvidflag = params["bvidflag"];
-        // 查找 bvidflag 对应的视频项并移到数组的最前面
-        const index = items.findIndex(item => item["bvid"] === bvidflag);
-
-        if (index !== -1) {
-          // 将目标视频项移到最前面
-          const targetItem = items.splice(index, 1)[0];
-          items.unshift(targetItem);
-        }
-      }
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        this.datas.pushData({
-          description: item["description"], // 标题
-          head: item["head"], // 封面URL
-          video: item["video"], // 视频链接
-          bvid: item["bvid"],
-          name: item["name"], // UP主
-          face: item["face"],
-          view: item["view"], // 播放量
-          total: item["total"]??5, //当前观看人数
-          like: item["like"],
-          barrage: item["barrage"], // 弹幕数
-          time: item["time"], // 时长
-          pubdate: item["pubdate"],
-          coins: item["coins"], //投币
-          favorites: item["favorites"], //收藏
-          shares: item["shares"], //转发
-          controller: this.myController,
-          auto: false,
-          play: false,
-          index: i,
-        });
-
-
-
-        const updatedData: VideoData={
-          description: item["description"], // 标题
-          head: item["head"], // 封面URL
-          video: item["video"], // 视频链接
-          bvid: item["bvid"],
-          name: item["name"], // UP主
-          face: item["face"],
-          view: item["view"], // 播放量
-          total: item["total"]??5, //当前观看人数
-          like: item["like"],
-          barrage: item["barrage"], // 弹幕数
-          time: item["time"], // 时长
-          pubdate: item["pubdate"],
-          coins: item["coins"], //投币
-          favorites: item["favorites"], //收藏
-          shares: item["shares"], //转发
-          controller: this.myController,
-          auto: false,
-          play: false,
-          index: i,
-        }
-        this.datas.updateDataAtIndex(i, updatedData);
-
-
-      }
+    } else {
+      // 加载默认视频数据
+      this.loadDefaultVideos();
     }
+  }
 
+  // 从参数解析视频
+  private async parseVideoFromParams(params: Record<string, ESObject>) {
+    this.isLoading = true;
+    
+    try {
+      const bvidflag = params["bvidflag"] as string;
+      if (bvidflag) {
+        const blibliurl = `https://www.bilibili.com/video/${bvidflag}`;
+        console.info('开始解析视频:', blibliurl);
+        
+        const result = await bilibiliService.parseVideoDetails(this.context, blibliurl);
+        if (result) {
+          const videoData: VideoData = {
+            description: result.title,
+            head: result.pic,
+            video: result.videoUrl,
+            audioUrl: result.audioUrl,
+            bvid: result.bvid,
+            aid: String(result.aid),
+            cid: String(result.cid),
+            name: result.name,
+            face: result.face,
+            view: String(result.view),
+            like: String(result.like),
+            barrage: String(result.danmaku),
+            time: String(result.duration),
+            pubdate: String(result.pubdate),
+            coins: String(result.coin),
+            favorites: String(result.favorite),
+            shares: String(result.share),
+            reply: String(result.reply),
+            tname: result.tname,
+            controller: this.myController,
+            auto: false,
+            play: false,
+            index: '0'
+          };
+          
+          this.datas.pushData(videoData);
+          console.log('视频解析成功');
+        } else {
+          console.error('视频解析失败');
+          this.loadDefaultVideos();
+        }
+      } else {
+        this.loadDefaultVideos();
+      }
+    } catch (error) {
+      console.error('解析视频时出错:', error);
+      this.loadDefaultVideos();
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
-
-
-
+  // 加载默认视频
+  private loadDefaultVideos() {
+    // 把默认视频数据加载进datas对象中
+    for (let index = 0; index < this.videoDatas.length; index++) {
+      this.datas.pushData(this.videoDatas[index]);
+    }
   }
   onPageShow(): void {
     this.datas.getData(this.index).controller.start();
@@ -300,7 +207,7 @@ export struct VideoPlayer {
                     .onVisibleAreaChange([0.0, 1.0], (isVisisble: boolean, currentRatio: number) => {
                       if (isVisisble && currentRatio >= 1.0) {
                         item.controller.start();
-                        this.totalindex=item.total;
+                        this.totalindex = String(item.total || '0');
                       }
                     })
                   Side({
@@ -318,9 +225,9 @@ export struct VideoPlayer {
                   head: item.face,
                   name: item.name,
                   description: item.description,
-                  hotspot: item.pubdate,
-                  time: item.time,
-                  viewCount:item.view,
+                  hotspot: String(item.pubdate),
+                  time: String(item.time),
+                  viewCount: String(item.view),
                 })
                   .margin({ bottom: $r('app.integer.video_des_margin_bottom') })
                 // Row() {
