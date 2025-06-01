@@ -90,6 +90,10 @@ export struct VideoPlayer {
         params = {};
       }
       
+      // 立即加载本地默认视频，提供无缝体验
+      console.info('立即加载本地视频以提供无缝体验...');
+      this.loadDefaultVideos();
+      
       // 检查是否来自解析页面
       this.fromParse = Boolean(params["fromParse"]) || false;
       
@@ -98,11 +102,13 @@ export struct VideoPlayer {
         if (this.fromParse) {
           try {
             const videoData = (params["videoDatas"] as VideoData[])[0];
+            // 清空默认视频，使用传入的数据
+            this.datas.clearData();
             this.datas.pushData(videoData);
             console.log('使用解析页面传入的视频数据');
           } catch (dataError) {
             console.error('处理传入视频数据失败:', dataError);
-            this.loadDefaultVideos();
+            // 如果处理失败，保持默认视频
           }
         } else {
           // 传统模式：需要重新解析视频
@@ -112,10 +118,6 @@ export struct VideoPlayer {
         // 如果有bvidflag参数，调用解析方法
         console.info('检测到bvidflag参数，开始处理视频');
         await this.parseVideoFromParams(params);
-      } else {
-        // 加载默认视频数据
-        console.info('没有视频参数，加载默认视频');
-        this.loadDefaultVideos();
       }
       
       console.info('VideoPlayer组件初始化完成');
@@ -143,7 +145,7 @@ export struct VideoPlayer {
         console.info('准备获取token...');
         if (!this.context) {
           console.error('应用上下文不存在，无法获取token');
-          this.loadDefaultVideos();
+          promptAction.showToast({ message: '应用初始化失败，仅可观看本地视频' });
           return;
         }
         
@@ -161,19 +163,17 @@ export struct VideoPlayer {
         } catch (tokenError) {
           console.error('获取token时出错:', tokenError);
           console.error('token错误详情:', JSON.stringify(tokenError));
-          promptAction.showToast({ message: '获取登录状态失败，请重试' });
-          this.loadDefaultVideos();
+          promptAction.showToast({ message: '获取登录状态失败，本地视频仍可观看' });
           return;
         }
         
         if (!token) {
           console.error('用户未登录，无法处理视频');
           try {
-            promptAction.showToast({ message: '请先登录后再播放视频' });
+            promptAction.showToast({ message: '请先登录后再解析在线视频，本地视频仍可观看' });
           } catch (toastError) {
             console.error('显示toast时出错:', toastError);
           }
-          this.loadDefaultVideos();
           return;
         }
         
@@ -187,7 +187,7 @@ export struct VideoPlayer {
           // 使用新的完整视频处理流程，添加超时保护
           const apiPromise = bilibiliService.processVideoComplete(this.context, blibliurl);
           const timeoutPromise = new Promise<null>((_, reject) => {
-            setTimeout(() => reject(new Error('视频处理超时，请检查网络连接')), 30000); // 30秒超时
+            setTimeout(() => reject(new Error('视频处理超时，请检查网络连接')), 600000); // 10分钟超时，适应较长的解析时间
           });
           
           console.info('开始等待API响应...');
@@ -199,17 +199,17 @@ export struct VideoPlayer {
           console.error('API错误详情:', JSON.stringify(apiError));
           
           // 根据错误类型显示不同的提示
-          let errorMessage = '视频处理失败';
+          let errorMessage = '视频解析失败，但本地视频仍可观看';
           if (apiError.message.includes('超时')) {
-            errorMessage = '网络连接超时，请检查网络后重试';
+            errorMessage = '视频解析超时，本地视频仍可观看。解析可能需要较长时间，请稍后重试';
           } else if (apiError.message.includes('401')) {
-            errorMessage = '登录已过期，请重新登录';
+            errorMessage = '登录已过期，请重新登录。本地视频仍可观看';
           } else if (apiError.message.includes('网络')) {
-            errorMessage = '网络连接失败，请检查网络设置';
+            errorMessage = '网络连接失败，本地视频仍可观看。请检查网络设置后重试';
           }
           
           promptAction.showToast({ message: errorMessage });
-          this.loadDefaultVideos();
+          // 不再调用loadDefaultVideos()，因为已经在开始时加载了
           return;
         }
         
@@ -244,19 +244,24 @@ export struct VideoPlayer {
               controller: this.myController,
               auto: false,
               play: false,
-              index: '0'
+              index: '0',
+              total: String(result.view || '0')
             };
             
-            this.datas.pushData(videoData);
-            console.log('视频处理成功，已添加到播放列表');
+            // 将解析成功的视频插入到列表开头，让用户优先看到解析的内容
+            this.datas.addData(0, videoData);
+            console.info('解析的视频已添加到列表开头，用户可以无缝切换');
+            
+            // 显示解析成功的提示
+            promptAction.showToast({ message: '视频解析成功！' });
           } catch (dataError) {
             console.error('创建视频数据时出错:', dataError);
             console.error('数据错误详情:', JSON.stringify(dataError));
-            this.loadDefaultVideos();
+            promptAction.showToast({ message: '视频数据处理失败，但本地视频仍可观看' });
           }
         } else {
           console.error('视频处理失败：API返回空结果');
-          this.loadDefaultVideos();
+          promptAction.showToast({ message: '视频解析失败，但本地视频仍可观看' });
         }
       } else {
         console.error('未接收到有效的bvidflag参数');
