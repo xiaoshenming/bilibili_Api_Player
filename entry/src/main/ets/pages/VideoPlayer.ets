@@ -1,12 +1,13 @@
 import { CommonConstants as Const } from '../common/CommonConstants';
 import { MyDataSource } from '../Model/MyDataSource';
 import { VideoData, BilibiliVideoInfo } from '../Model/VideoData';
-import { router, curves } from '@kit.ArkUI';
+import { router, curves, promptAction } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
 import { bilibiliService } from '../api/BilibiliService';
 import { Side, VideoDes } from '../view/Side';
 import { TopTabContent } from '../Model/DataModel';
 import { common } from '@kit.AbilityKit';
+import { tokenManager } from '../utils/TokenManager';
 let videoIndex: number = 0;
 
 @Entry
@@ -92,8 +93,13 @@ export struct VideoPlayer {
         // 传统模式：需要重新解析视频
         await this.parseVideoFromParams(params);
       }
+    } else if (params["bvidflag"]) {
+      // 如果有bvidflag参数，调用解析方法
+      console.info('检测到bvidflag参数，开始解析视频');
+      await this.parseVideoFromParams(params);
     } else {
       // 加载默认视频数据
+      console.info('没有视频参数，加载默认视频');
       this.loadDefaultVideos();
     }
   }
@@ -104,52 +110,107 @@ export struct VideoPlayer {
     
     try {
       const bvidflag = params["bvidflag"] as string;
+      console.info('接收到bvidflag参数:', bvidflag);
+      
       if (bvidflag) {
         const blibliurl = `https://www.bilibili.com/video/${bvidflag}`;
         console.info('开始解析视频:', blibliurl);
         
-        const result = await bilibiliService.parseVideoDetails(this.context, blibliurl);
+        // 检查token状态
+        console.info('准备获取token...');
+        let token: string | null = null;
+        try {
+          console.info('获取前');
+          token = await tokenManager.getToken(this.context);
+          console.info('token获取完成，状态:', token ? '已登录' : '未登录');
+        } catch (tokenError) {
+          console.error('获取token时出错:', tokenError);
+          console.error('token错误详情:', JSON.stringify(tokenError));
+          this.loadDefaultVideos();
+          return;
+        }
+        
+        if (!token) {
+          console.error('用户未登录，无法解析视频');
+          try {
+            promptAction.showToast({ message: '请先登录后再解析视频' });
+          } catch (toastError) {
+            console.error('显示toast时出错:', toastError);
+          }
+          this.loadDefaultVideos();
+          return;
+        }
+        
+        console.info('开始调用后端API解析视频...');
+        let result: BilibiliVideoInfo | null = null;
+        try {
+          result = await bilibiliService.parseVideoDetails(this.context, blibliurl);
+          console.info('API调用结果:', result ? '成功' : '失败');
+        } catch (apiError) {
+          console.error('调用API时出错:', apiError);
+          console.error('API错误详情:', JSON.stringify(apiError));
+          this.loadDefaultVideos();
+          return;
+        }
+        
         if (result) {
-          const videoData: VideoData = {
-            description: result.title,
-            head: result.pic,
-            video: result.videoUrl,
-            audioUrl: result.audioUrl,
+          console.info('解析到的视频信息:', {
+            title: result.title,
             bvid: result.bvid,
-            aid: String(result.aid),
-            cid: String(result.cid),
-            name: result.name,
-            face: result.face,
-            view: String(result.view),
-            like: String(result.like),
-            barrage: String(result.danmaku),
-            time: String(result.duration),
-            pubdate: String(result.pubdate),
-            coins: String(result.coin),
-            favorites: String(result.favorite),
-            shares: String(result.share),
-            reply: String(result.reply),
-            tname: result.tname,
-            controller: this.myController,
-            auto: false,
-            play: false,
-            index: '0'
-          };
+            videoUrl: result.videoUrl ? '有视频链接' : '无视频链接',
+            audioUrl: result.audioUrl ? '有音频链接' : '无音频链接'
+          });
           
-          this.datas.pushData(videoData);
-          console.log('视频解析成功');
+          try {
+            const videoData: VideoData = {
+              description: result.title,
+              head: result.pic,
+              video: result.videoUrl,
+              audioUrl: result.audioUrl,
+              bvid: result.bvid,
+              aid: String(result.aid),
+              cid: String(result.cid),
+              name: result.name,
+              face: result.face,
+              view: String(result.view),
+              like: String(result.like),
+              barrage: String(result.danmaku),
+              time: String(result.duration),
+              pubdate: String(result.pubdate),
+              coins: String(result.coin),
+              favorites: String(result.favorite),
+              shares: String(result.share),
+              reply: String(result.reply),
+              tname: result.tname,
+              controller: this.myController,
+              auto: false,
+              play: false,
+              index: '0'
+            };
+            
+            this.datas.pushData(videoData);
+            console.log('视频解析成功，已添加到播放列表');
+          } catch (dataError) {
+            console.error('创建视频数据时出错:', dataError);
+            console.error('数据错误详情:', JSON.stringify(dataError));
+            this.loadDefaultVideos();
+          }
         } else {
-          console.error('视频解析失败');
+          console.error('视频解析失败：API返回空结果');
           this.loadDefaultVideos();
         }
       } else {
+        console.error('未接收到有效的bvidflag参数');
         this.loadDefaultVideos();
       }
     } catch (error) {
-      console.error('解析视频时出错:', error);
+      console.error('解析视频时出现未捕获的错误:', error);
+      console.error('未捕获错误详情:', JSON.stringify(error));
+      console.error('错误堆栈:', error.stack);
       this.loadDefaultVideos();
     } finally {
       this.isLoading = false;
+      console.info('parseVideoFromParams方法执行完成');
     }
   }
 

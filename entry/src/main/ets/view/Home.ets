@@ -170,10 +170,11 @@ export struct Home {
                       });
                   }
                   .onClick(() => {
-                    //点击之后跳转到Videoplay
+                    //点击之后跳转到Videoplay并触发视频解析
                     console.log(`视频名称: ${item.description}`);
-                    console.log(`地址: ${item.head}`);
-                    router.pushUrl({ url: "pages/VideoPlayer", params: { videoDatas: [item] } });
+                    console.log(`BVID: ${item.bvid}`);
+                    // 传递bvidflag参数来触发视频解析逻辑
+                    router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
                   })
                   .borderRadius(5)
                   .width('100%')
