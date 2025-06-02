@@ -216,7 +216,8 @@ class ApiService {
   }
 
   // 获取哔哩哔哩推荐视频列表
-  getBilibiliRecommendVideos(token: string, page: number = 1): Promise<{
+  // 注意：后端暂时没有此API，返回空数据避免404错误
+  async getBilibiliRecommendVideos(token: string, page: number = 1): Promise<{
     videos: Array<{
       bvid: string;
       aid: number;
@@ -244,14 +245,10 @@ class ApiService {
     }>;
     has_more: boolean;
   }> {
-    return this.request('/bilibili/recommend-videos', {
-      method: http.RequestMethod.GET,
-      header: {
-        'Authorization': `Bearer ${token}`,
-        'devicetype': 'harmony'
-      },
-      extraData: `page=${page}`
-    });
+    // 由于后端没有recommend-videos API，直接返回空数据
+    // 这样会触发Home.ets中的catch块，回退到loadData方法
+    console.log('getBilibiliRecommendVideos: 后端暂无此API，将回退到原有数据加载方式');
+    throw new Error('recommend-videos API暂未实现，回退到原有方式');
   }
 
   // 【新增】检查用户登录状态和Token有效性
