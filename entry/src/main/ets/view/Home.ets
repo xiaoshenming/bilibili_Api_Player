@@ -130,15 +130,33 @@ export struct Home {
 
   async loadBilibiliAuthInfo(): Promise<void> {
     try {
+      if (!this.userToken) {
+        console.warn('用户token为空，无法获取哔哩哔哩鉴权信息');
+        return;
+      }
+
       const authInfo = await apiService.getBilibiliAuthInfo(this.userToken);
-      this.bilibiliAuthInfo = {
-        nickname: authInfo.nickname,
-        avatar: authInfo.avatar,
-        dedeuserid: authInfo.dedeuserid
-      };
-      console.log('获取哔哩哔哩鉴权信息成功:', authInfo.nickname);
+      
+      // 验证返回的数据完整性
+      if (authInfo && authInfo.cookies && authInfo.cookies.SESSDATA) {
+        this.bilibiliAuthInfo = {
+          nickname: authInfo.nickname || '未知用户',
+          avatar: authInfo.avatar || '',
+          dedeuserid: authInfo.dedeuserid || ''
+        };
+        console.log('获取哔哩哔哩鉴权信息成功:', {
+          nickname: authInfo.nickname,
+          dedeuserid: authInfo.dedeuserid,
+          hasValidSessdata: !!authInfo.cookies.SESSDATA
+        });
+      } else {
+        console.error('获取的鉴权信息不完整:', authInfo);
+        throw new Error('鉴权信息格式错误');
+      }
     } catch (error) {
       console.error('获取哔哩哔哩鉴权信息失败:', error);
+      // 清空鉴权信息
+      this.bilibiliAuthInfo = null;
     }
   }
 
@@ -186,15 +204,38 @@ export struct Home {
 
   // 加载数据的公共方法
   private async loadData(): Promise<void> {
-    // const sessdata = '你的SESSDATA'; // 替换成实际的 SESSDATA
-    const sessdata = 'ab9d6d14%2C1746252800%2C9f8a2%2Ab1CjDy9wFwCOPazj3xO5hhngHPdK3Iy0kaicJX2rOm6GhJYUynqJTtckHDkSZAPDFjGZoSVjdkVWUxN1VYZlBuYUp3a291eDdLOVl3VnRKV0l3UUJnZHNSRTY2T3ppWkphbkhLeU1fc05DYVZVb3Ywd1h2eTd6U1hkWnZZTlNCdXR1OUIybzM1clh3IIEC'; // 替换成实际的 SESSDATA
-    const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
+    try {
+      let sessdata: string = '';
+      
+      // 如果有用户token，尝试从API获取最新的SESSDATA
+      if (this.userToken) {
+        try {
+          const authInfo = await apiService.getBilibiliAuthInfo(this.userToken);
+          console.log('获取鉴权信息成功:', authInfo)
+          sessdata = authInfo.cookies.SESSDATA;
+          console.log('成功获取动态SESSDATA');
+        } catch (error) {
+          console.error('获取动态SESSDATA失败，使用备用方案:', error);
+          // 如果API获取失败，使用备用的SESSDATA
+          sessdata = '59a10793,1762276359,7f149*51CjBbahzoY1V9kQMXI0YfxO_OQE5JrLc-MQowZ4rizmyd6DSacH1NSjwQPSxNII6BYEISVlpWZ1N3TlRmU05BVUxlRXB4ZG5vSVpiNjZrNVFzNk43cDNjQWQ5Y0pqU3ltVXhmaHA1cEVMTlhNZXVsTVNNM21mWUVXLW5JckV1eEtPd0c3Rm1vMVJBIIEC';
+        }
+      } else {
+        // 如果没有token，使用备用的SESSDATA
+        sessdata = '59a10793,1762276359,7f149*51CjBbahzoY1V9kQMXI0YfxO_OQE5JrLc-MQowZ4rizmyd6DSacH1NSjwQPSxNII6BYEISVlpWZ1N3TlRmU05BVUxlRXB4ZG5vSVpiNjZrNVFzNk43cDNjQWQ5Y0pqU3ltVXhmaHA1cEVMTlhNZXVsTVNNM21mWUVXLW5JckV1eEtPd0c3Rm1vMVJBIIEC';
 
-    if (response) {
-      this.apiResponse = response; // 存储原始响应结果
-      this.parseApiResponse(response as Record<string, Object>); // 解析响应并存储视频数据
-    } else {
-      console.error('请求失败');
+        console.log('没有token，使用备用SESSDATA');
+      }
+      console.log('目前使用的SESSDATA',sessdata);
+      const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
+
+      if (response) {
+        this.apiResponse = response; // 存储原始响应结果
+        this.parseApiResponse(response as Record<string, Object>); // 解析响应并存储视频数据
+      } else {
+        console.error('请求失败');
+      }
+    } catch (error) {
+      console.error('loadData方法执行失败:', error);
     }
   }
 
@@ -300,11 +341,50 @@ export struct Home {
   build() {
     Scroll() {
       Column() {
-        Text("在线首页api获取")
-          .width("100%")
-          .height("10%")
-          .backgroundColor('#0080DC')
-          .textAlign(TextAlign.Center);
+        // 顶部标题栏，包含用户信息
+        Row() {
+          Text("在线首页api获取")
+            .fontSize(18)
+            .fontColor(Color.White)
+            .fontWeight(FontWeight.Bold)
+            .layoutWeight(1)
+            .textAlign(TextAlign.Center)
+          
+          // 用户鉴权信息显示
+          if (this.bilibiliAuthInfo) {
+            Row() {
+              if (this.bilibiliAuthInfo.avatar) {
+                Image(this.bilibiliAuthInfo.avatar)
+                  .width(24)
+                  .height(24)
+                  .borderRadius(12)
+                  .margin({ right: 6 })
+              }
+              Text(this.bilibiliAuthInfo.nickname)
+                .fontSize(12)
+                .fontColor(Color.White)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            }
+            .padding({ right: 12 })
+          } else if (this.userToken) {
+            Text("登录中...")
+              .fontSize(12)
+              .fontColor('#CCCCCC')
+              .padding({ right: 12 })
+          } else {
+            Text("未登录")
+              .fontSize(12)
+              .fontColor('#CCCCCC')
+              .padding({ right: 12 })
+          }
+        }
+        .width("100%")
+        .height("10%")
+        .backgroundColor('#0080DC')
+        .padding({ left: 16, right: 4 })
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(VerticalAlign.Center)
         Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex})
         {
           TabContent() {
