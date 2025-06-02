@@ -251,6 +251,43 @@ class ApiService {
     throw new Error('recommend-videos API暂未实现，回退到原有方式');
   }
 
+  // 获取用户视频列表
+  async getUserVideos(token: string): Promise<Array<{
+    id: number;
+    bvid: string;
+    title: string;
+    pic: string;
+    view: string;
+    danmaku: string;
+    like: string;
+    coin: string;
+    favorite: string;
+    share: string;
+    current_viewers: string;
+    quality: string;
+    download_link: string;
+    pubdate: string;
+    aid: string;
+    tname: string;
+    desc: string;
+    duration: string;
+    name: string;
+    face: string;
+    reply: string;
+    cid: string;
+    relation_type: string;
+    relation_created_at: string;
+    relation_desc: string;
+  }>> {
+    return this.request('/video/user-list', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      }
+    });
+  }
+
   // 【新增】检查用户登录状态和Token有效性
   async checkStatus(token: string): Promise<{
     success: boolean;
