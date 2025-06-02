@@ -33,6 +33,10 @@ export struct VideoPlayer {
   controller: webview.WebviewController = new webview.WebviewController();
   videoDatas: Array<VideoData> = [];
 
+  // 存储传递的用户token
+  private userToken: string | null = null;
+  private preloadedVideos: Set<string> = new Set(); // 记录已预加载的视频
+  
   async aboutToAppear() {
     try {
       console.info('VideoPlayer组件开始初始化');
@@ -45,6 +49,14 @@ export struct VideoPlayer {
       } catch (paramError) {
         console.error('获取路由参数失败:', paramError);
         params = {};
+      }
+      
+      // 接收传递的用户token
+      if (params["userToken"] && typeof params["userToken"] === 'string') {
+        this.userToken = params["userToken"] as string;
+        console.info('接收到用户token，长度:', this.userToken.length);
+      } else {
+        console.info('未接收到用户token，将使用本地token');
       }
       
       // 检查是否来自解析页面
@@ -71,10 +83,16 @@ export struct VideoPlayer {
           this.index = startIndex;
           console.info(`已加载${videoDatas.length}个视频，从第${startIndex}个开始播放`);
           
-          // 如果有预加载信息，确保当前视频可播放
+          // 确保当前视频可播放
           if (this.datas.totalCount() > startIndex) {
             const currentVideo = this.datas.getData(startIndex);
             await this.ensureVideoPlayable(currentVideo, startIndex);
+          }
+          
+          // 智能预加载相邻视频以实现连续播放
+          if (fromDynamic) {
+            console.info('来自Dynamic页面，开始智能预加载相邻视频');
+            await this.smartPreloadAdjacentVideos(startIndex);
           }
           
           // 如果来自首页且有bvidflag，异步解析更高质量版本
@@ -431,6 +449,10 @@ export struct VideoPlayer {
         await this.ensureVideoPlayable(currentVideo, currentIndex);
       }
       
+      // 智能预加载相邻视频以实现连续播放
+      console.info('开始智能预加载相邻视频以实现连续播放');
+      await this.smartPreloadAdjacentVideos(currentIndex);
+      
       // 预加载策略：当用户滑动到倒数第3个视频时，开始预加载更多视频
       if (currentIndex >= totalVideos - 3) {
         console.info('触发预加载条件，开始加载更多视频');
@@ -600,14 +622,161 @@ export struct VideoPlayer {
     }
   }
 
+  // 智能预加载相邻视频以实现连续播放
+  private async smartPreloadAdjacentVideos(currentIndex: number) {
+    try {
+      console.info(`开始智能预加载，当前索引: ${currentIndex}`);
+      
+      const totalCount = this.datas.totalCount();
+      const preloadTasks: Promise<void>[] = [];
+      
+      // 预加载策略：当前视频的前1个和后2个视频
+      const preloadIndices: number[] = [];
+      
+      // 前一个视频
+      if (currentIndex > 0) {
+        preloadIndices.push(currentIndex - 1);
+      }
+      
+      // 后面的视频（优先级更高）
+      for (let i = 1; i <= 2 && currentIndex + i < totalCount; i++) {
+        preloadIndices.push(currentIndex + i);
+      }
+      
+      console.info(`计划预加载视频索引: [${preloadIndices.join(', ')}]`);
+      
+      // 并发预加载
+      for (const index of preloadIndices) {
+        const video = this.datas.getData(index);
+        if (video && video.bvid && !this.preloadedVideos.has(video.bvid)) {
+          preloadTasks.push(this.preloadSingleVideoAsync(video, index));
+        }
+      }
+      
+      // 等待所有预加载任务完成（但不阻塞主流程）
+      if (preloadTasks.length > 0) {
+        Promise.allSettled(preloadTasks).then(results => {
+          const successCount = results.filter(r => r.status === 'fulfilled').length;
+          console.info(`预加载完成: ${successCount}/${results.length} 个视频预加载成功`);
+        });
+      }
+      
+    } catch (error) {
+      console.error('智能预加载失败:', error);
+    }
+  }
+  
+  // 获取正确的视频源
+  private getVideoSource(item: VideoData): Resource | string {
+    // 优先使用预加载的URL（通常是最新的有效链接）
+    if (item.preloaded_url && typeof item.preloaded_url === 'string' && item.preloaded_url.startsWith('http')) {
+      console.info(`🎬 使用预加载视频源: ${item.preloaded_url}`);
+      return item.preloaded_url;
+    }
+    
+    // 如果video是HTTP URL字符串，使用它
+    if (typeof item.video === 'string' && item.video.startsWith('http')) {
+      console.info(`🎬 使用HTTP视频源: ${item.video}`);
+      return item.video;
+    }
+    
+    // 如果都不是有效的HTTP链接，记录警告并返回原始值
+    console.warn(`⚠️ 没有找到有效的HTTP视频源，使用原始源:`, item.video);
+    console.warn(`📋 视频源详情 - video: ${item.video}, preloaded_url: ${item.preloaded_url}`);
+    return item.video;
+  }
+
+  // 重试视频播放的方法
+  private async retryVideoPlayback(item: VideoData, index: number): Promise<void> {
+    try {
+      console.info(`🔄 开始重试视频播放: ${item.bvid}`);
+      
+      // 确保有用户token
+      if (!this.userToken) {
+        console.error(`❌ 重试失败：缺少用户token`);
+        return;
+      }
+      
+      // 重新获取播放链接
+      const fileName = `${item.bvid}.mp4`;
+      const response = await apiService.generateDownloadLink(this.userToken, fileName);
+      
+      if (response && response.downloadUrl) {
+        console.info(`✅ 重试获取播放链接成功: ${response.downloadUrl}`);
+        
+        // 更新视频数据
+        item.video = response.downloadUrl;
+        item.preloaded_url = response.downloadUrl;
+        
+        // 强制刷新Video组件
+        this.datas.notifyDataChange(index);
+        
+        console.info(`🔄 已更新视频 ${item.bvid} 的播放链接，等待重新加载`);
+      } else {
+        console.error(`❌ 重试获取播放链接失败，API响应异常:`, response);
+      }
+    } catch (error) {
+      console.error(`❌ 重试视频播放失败:`, error);
+    }
+  }
+
+  // 异步预加载单个视频 - 使用正确的下载链接API
+  private async preloadSingleVideoAsync(video: VideoData, index: number): Promise<void> {
+    try {
+      if (!video.bvid || this.preloadedVideos.has(video.bvid)) {
+        return;
+      }
+      
+      console.info(`开始预加载视频: ${video.bvid}`);
+      this.preloadedVideos.add(video.bvid);
+      
+      // 获取token（优先使用传递的token）
+      let token = this.userToken;
+      if (!token && this.context) {
+        token = await tokenManager.getToken(this.context);
+      }
+      
+      if (!token) {
+        console.warn(`预加载视频${video.bvid}失败: 无有效token`);
+        return;
+      }
+      
+      // 使用generate-download-link API获取真正可播放的链接
+      const fileName = `${video.bvid}.mp4`;
+      const result = await apiService.generateDownloadLink(token, fileName);
+      
+      if (result && result.downloadUrl) {
+        // 存储预加载的播放链接
+        video.preloaded_url = result.downloadUrl;
+        video.video = result.downloadUrl; // 直接更新video字段
+        
+        // 更新数据源
+        this.datas.updateDataAtIndex(index, video);
+        console.info(`视频${video.bvid}预加载成功，播放链接: ${result.downloadUrl}`);
+        console.info(`🔑 下载token: ${result.token}`);
+        console.info(`⏰ 链接过期时间: ${result.expiresAt}`);
+      } else {
+        console.warn(`预加载视频${video.bvid}失败: API返回无效结果`);
+        console.warn(`📋 API响应:`, result);
+      }
+      
+    } catch (error) {
+      console.error(`预加载视频${video.bvid}时出错:`, error);
+      // 预加载失败时，尝试保持原有链接
+      if (video.video && typeof video.video === 'string' && !video.video.startsWith('http')) {
+        console.info(`🔄 保持原有下载链接: ${video.video}`);
+      }
+    }
+  }
+  
   // 确保视频可播放（动态鉴权）
   private async ensureVideoPlayable(video: VideoData, index: number) {
     try {
-      console.info(`检查视频${index}(${video.bvid})的播放状态`);
+      console.info(`🔍 检查视频${index}(${video.bvid})的播放状态`);
       
       // 检查是否有预加载的链接
       if (video.preloaded_url && video.preloaded_url.startsWith('http')) {
-        console.info(`使用预加载的播放链接: ${video.bvid}`);
+        console.info(`✅ 使用预加载的播放链接: ${video.bvid} - ${video.preloaded_url}`);
         video.video = video.preloaded_url;
         if (video.preloaded_audio) {
           video.audioUrl = video.preloaded_audio;
@@ -621,41 +790,54 @@ export struct VideoPlayer {
       if (video.video && typeof video.video === 'string' && video.video.startsWith('http') && 
           !video.video.includes('/api/video/download/') && 
           !video.video.includes('download_link')) {
-        console.info(`视频${index}已有有效播放链接，无需重新获取`);
+        console.info(`✅ 视频${index}已有有效播放链接，无需重新获取: ${video.video}`);
         return;
       }
       
       // 如果没有有效播放链接，动态获取
       if (video.bvid && this.context) {
-        console.info(`开始为视频${video.bvid}获取播放链接`);
+        console.info(`🔄 开始为视频${video.bvid}获取播放链接`);
         
-        const token = await tokenManager.getToken(this.context);
+        // 优先使用传递的token
+        let token = this.userToken;
         if (!token) {
-          console.error('用户未登录，无法获取播放链接');
+          token = await tokenManager.getToken(this.context);
+        }
+        
+        if (!token) {
+          console.error('❌ 用户未登录，无法获取播放链接');
           return;
         }
         
-        const videoUrl = `https://www.bilibili.com/video/${video.bvid}`;
-        const result = await apiService.parseVideo(token, videoUrl);
+        // 使用generate-download-link API获取真正可播放的链接
+        const fileName = `${video.bvid}.mp4`;
+        const result = await apiService.generateDownloadLink(token, fileName);
         
-        if (result && result.play_info) {
-          console.info(`成功获取视频${video.bvid}的播放链接`);
-          video.video = result.play_info.video_url || '';
-          video.audioUrl = result.play_info.audio_url || '';
+        if (result && result.downloadUrl) {
+          // 将获取到的播放链接存储到视频数据中
+          video.video = result.downloadUrl;
+          video.preloaded_url = result.downloadUrl;
           
-          // 存储到预加载信息中
-          video.preloaded_url = video.video as string;
-          video.preloaded_audio = video.audioUrl;
-          
-          // 更新数据源中的视频数据
+          // 更新数据源
           this.datas.updateDataAtIndex(index, video);
-          console.info(`视频${video.bvid}播放链接更新完成`);
+          console.info(`✅ 视频${video.bvid}播放链接获取成功: ${result.downloadUrl}`);
+          console.info(`🔑 下载token: ${result.token}`);
+          console.info(`⏰ 链接过期时间: ${result.expiresAt}`);
+          console.info(`🎬 视频源类型: ${typeof result.downloadUrl}`);
+          console.info(`🔗 链接长度: ${result.downloadUrl.length}`);
         } else {
-          console.error(`获取视频${video.bvid}播放链接失败`);
+          console.warn(`❌ 获取视频${video.bvid}播放链接失败`);
+          console.warn(`📋 API响应:`, JSON.stringify(result));
+          
+          // 如果获取失败，尝试使用原有的下载链接
+          if (video.video && typeof video.video === 'string' && !video.video.startsWith('http')) {
+            console.info(`🔄 使用原有下载链接: ${video.video}`);
+          }
         }
       }
     } catch (error) {
-      console.error(`确保视频${video.bvid}可播放时出错:`, error);
+      console.error(`❌ 确保视频${video.bvid}可播放时出错:`, JSON.stringify(error));
+      console.error(`🔍 错误详情:`, error);
     }
   }
   
@@ -692,19 +874,52 @@ export struct VideoPlayer {
               Stack({ alignContent: Alignment.BottomStart }) {
                 Stack({ alignContent: Alignment.BottomEnd }) {
                   Video({
-                    src: item.video,
-                    controller: item.controller, // 同样使用同一个控制器
+                    src: this.getVideoSource(item),
+                    controller: item.controller,
                     previewUri: item.head,
                   })
                     .width(Const.FULL_SIZE)
                     .height(Const.FULL_SIZE)
                     .objectFit(ImageFit.Contain)
                     .loop(true)
-                    .autoPlay(item.auto)// .controls(false)
+                    .autoPlay(item.auto)
+                    .controls(true) // 启用控制条以便调试
+                    .muted(false) // 确保音频未静音
+                    .opacity(1.0) // 确保视频可见
+                    .backgroundColor(Color.Black) // 设置背景色
                     .onPrepared((err) => {
-                      if (item && item.controller && typeof item.controller.start === 'function') {
-                        item.controller.start();
+                      if (err) {
+                        console.error(`❌ 视频准备失败 ${item.bvid}:`, JSON.stringify(err));
+                        console.error(`📹 视频源:`, this.getVideoSource(item));
+                        console.error(`🔍 视频源类型:`, typeof this.getVideoSource(item));
+                        console.error(`📋 完整视频数据:`, JSON.stringify(item));
+                      } else {
+                        console.info(`✅ 视频准备成功 ${item.bvid}`);
+                        console.info(`🎬 成功加载视频源:`, this.getVideoSource(item));
+                        // 延迟启动播放，确保视频完全准备好
+                        setTimeout(() => {
+                          if (item && item.controller && typeof item.controller.start === 'function') {
+                            item.controller.start();
+                            console.info(`▶️ 开始播放视频 ${item.bvid}`);
+                          }
+                        }, 100);
                       }
+                    })
+                    .onError(() => {
+                      console.error(`❌ 视频播放错误 ${item.bvid}`);
+                      console.error(`📹 当前视频源:`, this.getVideoSource(item));
+                      console.error(`🔍 视频源类型:`, typeof this.getVideoSource(item));
+                      console.error(`📋 视频数据:`, JSON.stringify({
+                        bvid: item.bvid,
+                        video: item.video,
+                        preloaded_url: item.preloaded_url,
+                        head: item.head,
+                        description: item.description
+                      }));
+                      
+                      // 尝试重新获取播放链接
+                      console.warn(`🔄 尝试重新获取视频 ${item.bvid} 的播放链接`);
+                      this.retryVideoPlayback(item, index);
                     })
                     .onStart(() => {
                       item.play = true;
