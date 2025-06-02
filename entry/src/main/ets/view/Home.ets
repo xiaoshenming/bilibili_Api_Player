@@ -575,16 +575,22 @@ export struct Home {
     console.log(`🎉 历史视频预加载完成，共处理${videos.length}个视频`);
   }
 
-  // 预加载单个历史视频的播放链接
+  // 预加载单个历史视频的播放链接 - 与Dynamic.ets的preloadSingleVideo完全一致
   private async preloadSingleHistoryVideo(video: VideoData, index: number): Promise<void> {
     try {
-      // 检查是否已经有有效的播放链接
+      // 检查是否已经预加载过
       if (video.video && typeof video.video === 'string' && video.video.startsWith('http')) {
         console.log(`⚡ 视频 ${video.bvid} 已有播放链接，跳过预加载`);
         return;
       }
       
-      console.log(`🔄 开始预加载历史视频 ${index}: ${video.description} (${video.bvid})`);
+      // 使用当前的token进行鉴权
+      if (!this.userToken) {
+        console.error(`❌ Token不存在，无法预加载视频 ${video.bvid}`);
+        return;
+      }
+      
+      console.log(`🔄 开始预加载视频 ${index}: ${video.description} (${video.bvid})`);
       
       // 使用generate-download-link API获取真正可播放的链接
       const fileName = `${video.bvid}.mp4`;
@@ -594,24 +600,21 @@ export struct Home {
         // 将获取到的播放链接存储到视频数据中
         video.video = response.downloadUrl;
         
-        console.log(`✅ 历史视频 ${video.bvid} 预加载成功`);
+        console.log(`✅ 视频 ${video.bvid} 预加载成功，播放链接: ${response.downloadUrl}`);
         console.log(`🔑 下载token: ${response.token}`);
         console.log(`⏰ 链接过期时间: ${response.expiresAt}`);
       } else {
-        console.warn(`⚠️ 历史视频 ${video.bvid} 预加载失败：API返回数据异常`);
+        console.warn(`⚠️ 视频 ${video.bvid} 预加载失败：API返回数据异常`);
         console.warn(`📋 API响应:`, response);
-        
-        // 如果获取播放链接失败，保持原有的下载链接
-        if (video.video && typeof video.video === 'string' && !video.video.startsWith('http')) {
-          console.log(`🔄 保持原有下载链接: ${video.video}`);
-        }
       }
     } catch (error) {
-      console.error(`❌ 历史视频 ${video.bvid} 预加载失败:`, error);
+      console.error(`❌ 视频 ${video.bvid} 预加载失败:`, error);
+      // 预加载失败不影响整体流程，继续处理其他视频
       
-      // 预加载失败不影响整体流程，保持原有链接
+      // 如果是权限问题，尝试使用原有的下载链接
       if (video.video && typeof video.video === 'string' && !video.video.startsWith('http')) {
-        console.log(`🔄 预加载失败，保持原有下载链接: ${video.video}`);
+        console.log(`🔄 尝试使用原有下载链接: ${video.video}`);
+        // 保持原有链接不变
       }
     }
   }
@@ -860,6 +863,21 @@ export struct Home {
                             console.log(`🎯 点击的是历史视频，索引: ${clickedHistoryIndex}`);
                             finalVideos = this.reorderVideosForPlayback(allHistoryVideoData, clickedHistoryIndex);
                             startIndex = 0; // 重排后从第一个开始播放
+                            
+                            // 优先为点击的历史视频获取播放链接，确保第一个视频可播放
+                            console.log(`🎯 优先为点击的历史视频获取播放链接: ${finalVideos[0].bvid}`);
+                            await this.preloadSingleHistoryVideo(finalVideos[0], 0);
+                            
+                            // 验证第一个视频是否有有效的播放链接
+                            if (!finalVideos[0].video || !finalVideos[0].video.toString().startsWith('http')) {
+                              console.error(`❌ 历史视频 ${finalVideos[0].bvid} 没有获取到有效播放链接，无法播放`);
+                              promptAction.showToast({ message: '视频链接获取失败，请重试' });
+                              return;
+                            }
+                            
+                            // 预加载其他历史视频的播放链接（异步进行，不阻塞跳转）
+                            console.log('🚀 开始预加载其他历史视频的播放链接...');
+                            this.preloadHistoryVideos(finalVideos.slice(1, 5)); // 异步预加载第2-5个视频
                           } else {
                             // 点击的是推荐视频，需要解析并插入到历史列表
                             console.log('🆕 点击的是推荐视频，将其插入到历史列表开头');
@@ -896,26 +914,44 @@ export struct Home {
                             finalVideos = [clickedVideoData, ...allHistoryVideoData];
                             startIndex = 0;
                             
-                            // 异步解析点击的推荐视频
-                            this.parseRecommendedVideoAsync(item.bvid, finalVideos);
+                            // 同步解析点击的推荐视频，等待完成后再跳转
+                            console.log(`🎯 优先为点击的推荐视频获取播放链接: ${item.bvid}`);
+                            await this.preloadSingleRecommendedVideo(clickedVideoData);
+                            
+                            // 验证第一个视频是否有有效的播放链接
+                            if (!clickedVideoData.video || !clickedVideoData.video.toString().startsWith('http')) {
+                              console.error(`❌ 推荐视频 ${item.bvid} 没有获取到有效播放链接，无法播放`);
+                              promptAction.showToast({ message: '视频链接获取失败，请重试' });
+                              return;
+                            }
+                            
+                            console.log(`✅ 推荐视频 ${item.bvid} 播放链接获取成功: ${clickedVideoData.video}`);
+                            
+                            // 预加载其他历史视频的播放链接（异步进行，不阻塞跳转）
+                            console.log('🚀 开始预加载其他历史视频的播放链接...');
+                            this.preloadHistoryVideos(finalVideos.slice(1, 6)); // 异步预加载第2-6个视频
                           }
                           
-                          // 预加载前几个视频的播放链接
-                          console.log('🚀 开始预加载历史视频的播放链接...');
-                          await this.preloadHistoryVideos(finalVideos.slice(0, 5)); // 预加载前5个视频
+                          // 最终验证第一个视频的播放链接
+                          console.log(`🔍 最终验证第一个视频播放链接: ${finalVideos[0].video}`);
+                          if (!finalVideos[0].video || !finalVideos[0].video.toString().startsWith('http')) {
+                            console.error(`❌ 第一个视频没有有效的播放链接，无法播放`);
+                            promptAction.showToast({ message: '视频链接无效，请重试' });
+                            return;
+                          }
                           
-                          // 跳转到视频播放页面
+                          // 跳转到视频播放页面，传递与Dynamic.ets完全相同的参数
+                          console.log(`🚀 跳转到视频播放页面，第一个视频: ${finalVideos[0].bvid}`);
                           router.pushUrl({
                             url: "pages/VideoPlayer",
                             params: {
                               videoDatas: finalVideos,
                               bvidflag: item.bvid,
-                              startIndex: startIndex,
-                              fromHome: true,
-                              userToken: this.userToken,
-                              playbackMode: 'history',
-                              enableSmartPreload: true,
-                              preloadRange: 5
+                              startIndex: 0, // 从重排后的第一个开始播放
+                              userToken: this.userToken, // 传递用户token
+                              preloadedCount: 1, // 已预加载的视频数量（第一个视频）
+                              enableSmartPreload: true, // 启用智能预加载
+                              preloadRange: 5 // 预加载范围（当前视频前后5个）
                             }
                           });
                           
@@ -1014,46 +1050,108 @@ export struct Home {
     .height('100%');
   }
 
-  // 异步解析推荐视频并插入到播放列表
-  private async parseRecommendedVideoAsync(bvid: string, videoList: VideoData[]) {
+  // 预加载单个推荐视频的播放链接
+  private async preloadSingleRecommendedVideo(video: VideoData): Promise<void> {
+    try {
+      // 检查是否已经有有效的播放链接
+      if (video.video && typeof video.video === 'string' && video.video.startsWith('http')) {
+        console.log(`⚡ 推荐视频 ${video.bvid} 已有播放链接，跳过预加载`);
+        return;
+      }
+      
+      // 使用当前的token进行鉴权
+      if (!this.userToken) {
+        console.error(`❌ Token不存在，无法预加载推荐视频 ${video.bvid}`);
+        return;
+      }
+      
+      console.log(`🔄 开始预加载推荐视频: ${video.description} (${video.bvid})`);
+      
+      // 使用generate-download-link API获取真正可播放的链接
+      const fileName = `${video.bvid}.mp4`;
+      const response = await apiService.generateDownloadLink(this.userToken, fileName);
+      
+      if (response && response.downloadUrl) {
+        // 将获取到的播放链接存储到视频数据中
+        video.video = response.downloadUrl;
+        
+        console.log(`✅ 推荐视频 ${video.bvid} 预加载成功，播放链接: ${response.downloadUrl}`);
+        console.log(`🔑 下载token: ${response.token}`);
+        console.log(`⏰ 链接过期时间: ${response.expiresAt}`);
+        
+        // 通知播放页面视频解析完成
+        AppStorage.setOrCreate('parsedVideoUpdate', {
+          bvid: video.bvid,
+          timestamp: Date.now(),
+          downloadUrl: response.downloadUrl,
+          token: response.token,
+          expiresAt: response.expiresAt
+        });
+      } else {
+        console.warn(`⚠️ 推荐视频 ${video.bvid} 预加载失败：API返回数据异常`);
+        console.warn(`📋 API响应:`, response);
+      }
+    } catch (error) {
+      console.error(`❌ 推荐视频 ${video.bvid} 预加载失败:`, error);
+      
+      // 预加载失败不影响整体流程，继续处理其他视频
+      if (video.video && typeof video.video === 'string' && !video.video.startsWith('http')) {
+        console.log(`🔄 尝试使用原有下载链接: ${video.video}`);
+        // 保持原有链接不变
+      }
+    }
+  }
+  
+  // 异步解析推荐视频 - 使用与Dynamic.ets相同的方法
+  private async parseRecommendedVideoAsync(bvid: string, videoList: VideoData[]): Promise<void> {
     try {
       console.log(`🔄 开始异步解析推荐视频: ${bvid}`);
       
-      // 调用后台API解析视频
-      const parseResponse = await apiService.parseVideo(bvid, this.userToken);
+      // 检查token
+      if (!this.userToken) {
+        console.error(`❌ Token不存在，无法解析视频 ${bvid}`);
+        return;
+      }
       
-      if (parseResponse) {
+      // 使用与Dynamic.ets相同的方法：generateDownloadLink API获取真正可播放的链接
+      const fileName = `${bvid}.mp4`;
+      const response = await apiService.generateDownloadLink(this.userToken, fileName);
+      
+      if (response && response.downloadUrl) {
         console.log(`✅ 视频解析成功: ${bvid}`);
-        
-        // 获取解析后的视频信息
-        const parsedVideoInfo = parseResponse;
+        console.log(`🔗 播放链接: ${response.downloadUrl}`);
+        console.log(`🔑 下载token: ${response.token}`);
+        console.log(`⏰ 链接过期时间: ${response.expiresAt}`);
         
         // 更新第一个视频（点击的推荐视频）的播放链接
         if (videoList.length > 0 && videoList[0].bvid === bvid) {
-          // parseVideo返回的是基本信息，不包含播放链接
-          // 这里只更新基本信息，播放链接需要通过其他方式获取
-          videoList[0].bvid = parsedVideoInfo.bvid || videoList[0].bvid;
-          videoList[0].cid = parsedVideoInfo.cid || videoList[0].cid;
-          videoList[0].description = parsedVideoInfo.title || videoList[0].description;
-          videoList[0].tname = parsedVideoInfo.type || '推荐';
+          // 设置实际的播放链接
+          videoList[0].video = response.downloadUrl;
           
-          console.log(`🎯 已更新点击视频的播放信息: ${bvid}`);
+          console.log(`🎯 已更新点击视频的播放链接: ${bvid}`);
         }
         
-        // 通知播放页面视频解析完成（如果需要的话）
-        // 这里可以通过EventBus或其他方式通知播放页面
+        // 通知播放页面视频解析完成
         AppStorage.setOrCreate('parsedVideoUpdate', {
           bvid: bvid,
           timestamp: Date.now(),
-          videoInfo: parsedVideoInfo
+          downloadUrl: response.downloadUrl,
+          token: response.token,
+          expiresAt: response.expiresAt
         });
         
       } else {
-        console.warn(`⚠️ 视频解析失败: ${bvid}`, parseResponse);
+        console.warn(`⚠️ 视频解析失败：API返回数据异常 ${bvid}`);
+        console.warn(`📋 API响应:`, response);
       }
       
     } catch (error) {
       console.error(`❌ 异步解析视频失败: ${bvid}`, error);
+      
+      // 如果解析失败，尝试使用原有的下载链接（如果有的话）
+      if (videoList.length > 0 && videoList[0].bvid === bvid) {
+        console.log(`🔄 解析失败，保持原有链接`);
+      }
     }
   }
 }
