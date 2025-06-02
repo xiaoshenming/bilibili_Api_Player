@@ -445,15 +445,33 @@ export struct Home {
   onPageShow(): void {
     const currentData = this.datas.getData(this.index);
     if (currentData && currentData.controller) {
-      currentData.controller.start();
+      if (currentData.controller && typeof currentData.controller.start === 'function') {
+        currentData.controller.start();
+      }
     }
   }
 
   onPageHide(): void {
     const currentData = this.datas.getData(this.index);
     if (currentData && currentData.controller) {
-      currentData.controller.pause();
+      if (currentData.controller && typeof currentData.controller.pause === 'function') {
+        currentData.controller.pause();
+      }
     }
+  }
+
+  // 重新排序视频列表，将指定索引的视频放在第一位
+  private reorderVideosForPlayback(videos: VideoData[], targetIndex: number): VideoData[] {
+    if (targetIndex < 0 || targetIndex >= videos.length) {
+      return videos;
+    }
+    
+    const reordered = [...videos];
+    const targetVideo = reordered.splice(targetIndex, 1)[0];
+    reordered.unshift(targetVideo);
+    
+    console.info(`视频列表已重排序，目标视频"${targetVideo.name}"现在位于第一位`);
+    return reordered;
   }
 
   build() {
@@ -620,12 +638,38 @@ export struct Home {
                     .backgroundColor(Color.White)
                     .borderRadius({ bottomLeft: 8, bottomRight: 8 })
                   }
-                  .onClick(() => {
-                    //点击之后跳转到Videoplay并触发视频解析
+                  .onClick(async () => {
+                    //点击之后跳转到Videoplay并传递完整的视频列表
                     console.log(`视频名称: ${item.description}`);
                     console.log(`BVID: ${item.bvid}`);
-                    // 传递bvidflag参数来触发视频解析逻辑
-                    router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
+                    
+                    try {
+                      // 获取当前所有视频数据
+                      const allVideos = this.datas.getAllData();
+                      
+                      // 找到点击的视频在列表中的索引
+                      const clickedIndex = allVideos.findIndex(video => video.bvid === item.bvid);
+                      const startIndex = clickedIndex >= 0 ? clickedIndex : 0;
+                      
+                      // 重新排序视频列表，将点击的视频放在第一位
+                      const reorderedVideos = this.reorderVideosForPlayback(allVideos, startIndex);
+                      
+                      // 跳转到视频播放页面，传递完整的视频列表
+                      router.pushUrl({
+                        url: "pages/VideoPlayer",
+                        params: {
+                          videoDatas: reorderedVideos,
+                          bvidflag: item.bvid, // 保留bvidflag用于后台解析更高质量版本
+                          startIndex: 0, // 从重排后的第一个开始播放
+                          fromHome: true // 标识来自首页
+                        }
+                      });
+                      
+                    } catch (error) {
+                      console.error('处理视频点击失败:', error);
+                      // 如果处理失败，回退到原来的方式
+                      router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
+                    }
                   })
                   .borderRadius(8)
                   .width('100%')

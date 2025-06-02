@@ -47,34 +47,50 @@ export struct VideoPlayer {
         params = {};
       }
       
-      // 初始化视频数据源
-      console.info('初始化视频数据源...');
-      this.loadDefaultVideos();
-      
       // 检查是否来自解析页面
       this.fromParse = Boolean(params["fromParse"]) || false;
       
+      // 优先处理传入的视频数据列表（来自Dynamic页面或Home页面）
       if (params["videoDatas"] && Array.isArray(params["videoDatas"]) && params["videoDatas"].length > 0) {
-        // 如果来自解析页面，直接使用传入的数据
-        if (this.fromParse) {
-          try {
-            const videoData = (params["videoDatas"] as VideoData[])[0];
-            // 清空默认视频，使用传入的数据
-            this.datas.clearData();
-            this.datas.pushData(videoData);
-            console.log('使用解析页面传入的视频数据');
-          } catch (dataError) {
-            console.error('处理传入视频数据失败:', dataError);
-            // 如果处理失败，保持默认视频
+        console.info('检测到传入的视频数据列表，直接使用');
+        try {
+          const videoDatas = params["videoDatas"] as VideoData[];
+          const startIndex = Number(params["startIndex"]) || 0;
+          const fromHome = Boolean(params["fromHome"]) || false;
+          const fromDynamic = Boolean(params["fromDynamic"]) || false;
+          
+          // 清空默认数据，使用传入的视频列表
+          this.datas.clearData();
+          videoDatas.forEach((video, index) => {
+            // 更新视频索引
+            video.index = index.toString();
+            this.datas.pushData(video);
+          });
+          
+          // 设置起始播放位置
+          this.index = startIndex;
+          console.info(`已加载${videoDatas.length}个视频，从第${startIndex}个开始播放`);
+          
+          // 如果有预加载信息，确保当前视频可播放
+          if (this.datas.totalCount() > startIndex) {
+            const currentVideo = this.datas.getData(startIndex);
+            await this.ensureVideoPlayable(currentVideo, startIndex);
           }
-        } else {
-          // 传统模式：需要重新解析视频
-          await this.parseVideoFromParams(params);
+          
+          // 如果来自首页且有bvidflag，异步解析更高质量版本
+          if (fromHome && params["bvidflag"]) {
+            console.info('来自首页，异步解析更高质量版本');
+            this.parseVideoFromParamsAsync(params);
+          }
+          
+        } catch (dataError) {
+          console.error('处理传入视频数据失败:', dataError);
+          // 如果处理失败，回退到解析模式
+          await this.handleFallbackMode(params);
         }
-      } else if (params["bvidflag"] && typeof params["bvidflag"] === 'string') {
-        // 如果有bvidflag参数，调用解析方法
-        console.info('检测到bvidflag参数，开始处理视频');
-        await this.parseVideoFromParams(params);
+      } else {
+        // 没有传入视频列表，使用传统模式
+        await this.handleFallbackMode(params);
       }
       
       console.info('VideoPlayer组件初始化完成');
@@ -82,13 +98,30 @@ export struct VideoPlayer {
       console.error('VideoPlayer组件初始化失败:', error);
       console.error('初始化错误详情:', JSON.stringify(error));
       // 确保即使出错也能显示默认视频
-      this.loadDefaultVideos();
+      await this.loadHistoryVideosAsBackup();
+    }
+  }
+  
+  // 处理回退模式（没有传入视频列表的情况）
+  private async handleFallbackMode(params: Record<string, Object> = {}) {
+    console.info('进入回退模式，先加载历史视频作为备选');
+    
+    // 先加载用户的历史视频作为备选内容
+    await this.loadHistoryVideosAsBackup();
+    
+    // 如果有bvidflag参数，异步解析目标视频
+    if (params["bvidflag"] && typeof params["bvidflag"] === 'string') {
+      console.info('检测到bvidflag参数，异步解析目标视频');
+      // 异步解析，不阻塞用户观看历史视频
+      this.parseVideoFromParamsAsync(params);
     }
   }
 
   // 从参数解析视频 - 使用新的API流程
-  private async parseVideoFromParams(params: Record<string, Object>) {
-    this.isLoading = true;
+  private async parseVideoFromParams(params: Record<string, Object>, isAsync: boolean = false) {
+    if (!isAsync) {
+      this.isLoading = true;
+    }
     
     try {
       const bvidflag = params["bvidflag"] as string;
@@ -205,12 +238,23 @@ export struct VideoPlayer {
               total: String(result.view || '0')
             };
             
-            // 将解析成功的视频插入到列表开头，让用户优先看到解析的内容
-            this.datas.addData(0, videoData);
-            console.info('解析的视频已添加到列表开头，用户可以无缝切换');
-            
-            // 显示解析成功的提示
-            promptAction.showToast({ message: '视频解析成功！' });
+            if (isAsync) {
+              // 异步模式：将解析成功的视频插入到当前播放视频的下一个位置
+              const currentIndex = this.index;
+              const insertIndex = currentIndex + 1;
+              this.datas.addData(insertIndex, videoData);
+              console.info(`解析的视频已插入到第${insertIndex}位，作为下一个播放视频`);
+              
+              // 显示解析成功的提示
+              promptAction.showToast({ message: '目标视频解析完成！已添加到播放列表' });
+            } else {
+              // 同步模式：将解析成功的视频插入到列表开头，让用户优先看到解析的内容
+              this.datas.addData(0, videoData);
+              console.info('解析的视频已添加到列表开头，用户可以无缝切换');
+              
+              // 显示解析成功的提示
+              promptAction.showToast({ message: '视频解析成功！' });
+            }
           } catch (dataError) {
             console.error('创建视频数据时出错:', dataError);
             console.error('数据错误详情:', JSON.stringify(dataError));
@@ -230,22 +274,144 @@ export struct VideoPlayer {
       console.error('错误堆栈:', error.stack);
       this.loadDefaultVideos();
     } finally {
-      this.isLoading = false;
+      if (!isAsync) {
+        this.isLoading = false;
+      }
       console.info('parseVideoFromParams方法执行完成');
     }
   }
 
-  // 加载默认视频数据
+  // 此处已删除重复的handleFallbackMode方法，使用上面的实现
+  
+  // 加载默认视频（兼容旧代码）
   private loadDefaultVideos() {
+    console.info('加载默认视频（已重定向到历史视频）');
+    this.loadHistoryVideosAsBackup();
+  }
+
+  // 加载历史视频作为备选内容
+  private async loadHistoryVideosAsBackup() {
     try {
-      console.info('初始化视频数据源...');
+      console.info('开始加载用户历史视频作为备选内容...');
       
       // 清空现有数据
       this.datas.clearData();
       
-      console.info('视频数据源初始化完成');
+      // 检查登录状态
+      if (!this.context) {
+        console.warn('应用上下文不存在，无法加载历史视频');
+        return;
+      }
+      
+      const token = await tokenManager.getToken(this.context);
+      if (!token) {
+        console.warn('用户未登录，无法加载历史视频');
+        return;
+      }
+      
+      // 获取用户历史视频
+      const historyVideos = await apiService.getUserVideos(token);
+      
+      if (historyVideos && historyVideos.length > 0) {
+        console.info(`成功获取${historyVideos.length}个历史视频`);
+        
+        // 转换为VideoData格式
+        historyVideos.forEach((video, index) => {
+          const videoData: VideoData = {
+            description: video.title || '未知标题',
+            head: video.pic || $r('app.media.photo35'),
+            video: video.download_link || '',
+            audioUrl: '',
+            bvid: video.bvid,
+            aid: String(video.id),
+            cid: video.cid || '0',
+            name: video.name,
+            face: video.face || 'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
+            view: String(video.view || '0'),
+            like: String(video.like || '0'),
+            barrage: String(video.danmaku || '0'),
+            time: String(video.duration || '0'),
+            pubdate: String(video.pubdate || '0'),
+            coins: String(video.coin || '0'),
+            favorites: String(video.favorite || '0'),
+            shares: String(video.share || '0'),
+            reply: String(video.reply || '0'),
+            tname: video.tname || '未知分区',
+            controller: this.myController,
+            auto: false,
+            play: false,
+            index: index.toString(),
+            total: String(video.current_viewers || '0'),
+            preloaded_url: '',
+            preloaded_audio: ''
+          };
+          
+          this.datas.pushData(videoData);
+        });
+        
+        console.info('历史视频加载完成，用户可以先观看历史内容');
+        
+        // 预加载前3个视频的播放链接
+        const videosToPreload = historyVideos.slice(0, 3).map((video): UserVideoInfo => ({
+          id: video.id,
+          bvid: video.bvid,
+          title: video.title,
+          pic: video.pic,
+          duration: video.duration,
+          view: video.view,
+          danmaku: video.danmaku,
+          like: video.like,
+          coin: video.coin,
+          share: video.share,
+          favorite: video.favorite,
+          reply: video.reply,
+          owner_name: video.name,
+          owner_face: video.face,
+          pubdate: video.pubdate,
+          tname: video.tname,
+          download_link: video.download_link,
+          current_viewers: video.current_viewers,
+          quality: video.quality,
+          aid: video.aid,
+          desc: video.desc,
+          name: video.name,
+          face: video.face,
+          cid: video.cid,
+          relation_type: video.relation_type,
+          relation_created_at: video.relation_created_at,
+          relation_desc: video.relation_desc
+        }));
+        
+        // 异步预加载，不阻塞界面
+        this.preloadVideoLinks(videosToPreload).then(() => {
+          console.info('历史视频预加载完成');
+        });
+        
+      } else {
+        console.info('没有找到历史视频');
+      }
+      
     } catch (error) {
-      console.error('初始化视频数据源失败:', error);
+      console.error('加载历史视频失败:', error);
+    }
+  }
+  // 此处删除重复的loadHistoryVideosAsBackup方法实现
+  
+  // 异步解析目标视频（不阻塞用户观看历史视频）
+  private async parseVideoFromParamsAsync(params: Record<string, Object>) {
+    try {
+      console.info('开始异步解析目标视频...');
+      
+      // 显示解析提示
+      promptAction.showToast({ message: '正在后台解析目标视频，您可以先观看其他视频' });
+      
+      // 异步执行解析，不阻塞当前界面
+      setTimeout(async () => {
+        await this.parseVideoFromParams(params, true); // 传入true表示是异步模式
+      }, 100);
+      
+    } catch (error) {
+      console.error('异步解析视频失败:', error);
     }
   }
 
@@ -506,13 +672,13 @@ export struct VideoPlayer {
   }
   onPageShow(): void {
     const currentData = this.datas.getData(this.index);
-    if (currentData && currentData.controller) {
+    if (currentData && currentData.controller && typeof currentData.controller.start === 'function') {
       currentData.controller.start();
     }
   }
   onPageHide(): void {
     const currentData = this.datas.getData(this.index);
-    if (currentData && currentData.controller) {
+    if (currentData && currentData.controller && typeof currentData.controller.pause === 'function') {
       currentData.controller.pause();
     }
   }
@@ -536,7 +702,7 @@ export struct VideoPlayer {
                     .loop(true)
                     .autoPlay(item.auto)// .controls(false)
                     .onPrepared((err) => {
-                      if (item && item.controller) {
+                      if (item && item.controller && typeof item.controller.start === 'function') {
                         item.controller.start();
                       }
                     })
@@ -556,15 +722,15 @@ export struct VideoPlayer {
                     })
                     .onClick(() => {
                       if (item && item.controller) {
-                        if (item.play) {
+                        if (item.play && typeof item.controller.pause === 'function') {
                           item.controller.pause();
-                        } else {
+                        } else if (!item.play && typeof item.controller.start === 'function') {
                           item.controller.start();
                         }
                       }
                     })
                     .onVisibleAreaChange([0.0, 1.0], (isVisisble: boolean, currentRatio: number) => {
-                      if (isVisisble && currentRatio >= 1.0 && item && item.controller) {
+                      if (isVisisble && currentRatio >= 1.0 && item && item.controller && typeof item.controller.start === 'function') {
                         item.controller.start();
                         this.totalindex = String(item.total || '0');
                       }
@@ -639,7 +805,7 @@ export struct VideoPlayer {
                   .height($r('app.integer.play_icon_size'))
                   .width($r('app.integer.play_icon_size'))
                   .onClick(() => {
-                    if (item && item.controller) {
+                    if (item && item.controller && typeof item.controller.start === 'function') {
                       item.controller.start();
                       item.play = true;
                       this.playBoo = true;

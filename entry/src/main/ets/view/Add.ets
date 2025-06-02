@@ -11,6 +11,7 @@ export struct Add {
   @State parseResult: BilibiliVideoInfo | null = null;
   @State showResult: boolean = false;
   private context = getContext(this) as common.UIAbilityContext;
+  private controller: VideoController = new VideoController();
 
   build() {
     Column({ space: 20 }) {
@@ -209,7 +210,7 @@ export struct Add {
       shares: this.parseResult.share,
       reply: String(this.parseResult.reply),
       tname: this.parseResult.tname,
-      controller: new VideoController(),
+      controller: this.controller,
       auto: false,
       play: false,
       index: '0'

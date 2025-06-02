@@ -355,18 +355,20 @@ export struct Dynamic {
     return reorderedVideos;
   }
   
-  // 重新排序全部视频列表
-  private reorderAllVideos(allVideos: Array<VideoData>, clickedIndex: number): Array<VideoData> {
-    if (clickedIndex < 0 || clickedIndex >= allVideos.length) {
-      return allVideos;
+  // 重新排序视频列表，将指定索引的视频放在第一位
+  private reorderAllVideos(videos: VideoData[], targetIndex: number): VideoData[] {
+    if (targetIndex < 0 || targetIndex >= videos.length) {
+      return videos;
     }
     
-    const clickedVideo = allVideos[clickedIndex];
-    const otherVideos = allVideos.filter((_, index) => index !== clickedIndex);
+    const reordered = [...videos];
+    const targetVideo = reordered.splice(targetIndex, 1)[0];
+    reordered.unshift(targetVideo);
     
-    return [clickedVideo, ...otherVideos];
+    console.info(`视频列表已重排序，目标视频"${targetVideo.description}"现在位于第一位`);
+    return reordered;
   }
-  
+
   // 预加载视频链接并进行鉴权
   private async preloadVideoLinksWithAuth(videos: Array<VideoData>): Promise<void> {
     console.log(`🔄 开始预加载 ${videos.length} 个视频的播放链接`);
@@ -435,11 +437,17 @@ export struct Dynamic {
   }
 
   onPageShow(): void {
-    this.datas.getData(this.index).controller.start();
+    const currentData = this.datas.getData(this.index);
+        if (currentData && currentData.controller && typeof currentData.controller.start === 'function') {
+          currentData.controller.start();
+        }
   }
 
   onPageHide(): void {
-    this.datas.getData(this.index).controller.pause();
+    const currentData = this.datas.getData(this.index);
+        if (currentData && currentData.controller && typeof currentData.controller.pause === 'function') {
+          currentData.controller.pause();
+        }
   }
 
   build() {
@@ -650,7 +658,45 @@ export struct Dynamic {
                   .backgroundColor(Color.White)
                   .borderRadius({ bottomLeft: 8, bottomRight: 8 })
                 }
-                .onClick(() => this.onVideoClick(item, index))
+                .onClick(async () => {
+                  console.log(`点击视频: ${item.description}`);
+                  
+                  try {
+                    this.isLoading = true;
+                    
+                    // 获取所有视频（100个）
+                    const allVideosResponse = await this.getUserVideosFromAPI(1, 100);
+                    const allVideos = this.convertToVideoData(allVideosResponse.videos);
+                    
+                    // 找到当前点击的视频在完整列表中的位置
+                    const clickedVideoIndex = allVideos.findIndex(video => video.bvid === item.bvid);
+                    
+                    // 重新排序，将点击的视频放在第一位
+                    const reorderedVideos = this.reorderAllVideos(allVideos, clickedVideoIndex);
+                    
+                    // 预加载前5个视频的播放链接
+                    await this.preloadVideoLinksWithAuth(reorderedVideos.slice(0, 5));
+                    
+                    // 跳转到视频播放页面
+                    router.pushUrl({
+                      url: "pages/VideoPlayer",
+                      params: {
+                        videoDatas: reorderedVideos,
+                        preloadedCount: 5,
+                        startIndex: 0,
+                        fromDynamic: true // 标识来自动态页面
+                      }
+                    });
+                    
+                    console.info(`已跳转到视频播放页面，共${reorderedVideos.length}个视频，预加载5个`);
+                    
+                  } catch (error) {
+                    console.error('处理视频点击失败:', error);
+                    promptAction.showToast({ message: '加载视频失败，请重试' });
+                  } finally {
+                    this.isLoading = false;
+                  }
+                })
                 .borderRadius(8)
                 .width('100%')
                 .backgroundColor(Color.White)
