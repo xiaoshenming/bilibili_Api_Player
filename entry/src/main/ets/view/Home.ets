@@ -591,6 +591,7 @@ export struct Home {
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
                         .lineHeight(20)
                         .width('100%')
+                        .height(48)  // 固定高度：20px行高 × 2行 + 8px间距
                         .margin({ bottom: 8 })
                       
                       // 作者信息和分类标签
