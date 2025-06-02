@@ -8,6 +8,8 @@ import { Side, VideoDes } from '../view/Side';
 import { TopTabContent } from '../Model/DataModel';
 import { common } from '@kit.AbilityKit';
 import { tokenManager } from '../utils/TokenManager';
+import { apiService } from '../api/ApiService';
+import { UserVideoInfo } from '../view/Dynamic';
 let videoIndex: number = 0;
 
 @Entry
@@ -298,6 +300,186 @@ export struct VideoPlayer {
       console.error('默认视频加载错误详情:', JSON.stringify(error));
     }
   }
+
+  // 处理视频滑动事件，实现动态预加载
+  private async handleVideoSwipe(currentIndex: number) {
+    try {
+      console.info(`用户滑动到第${currentIndex}个视频，开始预加载机制`);
+      
+      // 获取当前视频总数
+      const totalVideos = this.datas.totalCount();
+      console.info(`当前视频总数: ${totalVideos}`);
+      
+      // 预加载策略：当用户滑动到倒数第3个视频时，开始预加载更多视频
+      if (currentIndex >= totalVideos - 3) {
+        console.info('触发预加载条件，开始加载更多视频');
+        await this.loadMoreVideosWithAuth();
+      }
+      
+      // 更新当前观看人数（模拟实时数据）
+      this.updateCurrentViewers(currentIndex);
+      
+    } catch (error) {
+      console.error('处理视频滑动事件失败:', error);
+    }
+  }
+
+  // 加载更多视频并进行鉴权预加载
+  private async loadMoreVideosWithAuth() {
+    try {
+      if (this.isLoading) {
+        console.info('正在加载中，跳过重复请求');
+        return;
+      }
+      
+      this.isLoading = true;
+      console.info('开始加载更多视频...');
+      
+      // 检查登录状态
+      if (!this.context) {
+        console.error('应用上下文不存在');
+        return;
+      }
+      
+      const token = await tokenManager.getToken(this.context);
+      if (!token) {
+        console.error('用户未登录，无法加载更多在线视频');
+        return;
+      }
+      
+      // 调用API获取更多视频
+      const moreVideos = await apiService.getUserVideos(token);
+      
+      if (moreVideos && moreVideos.length > 0) {
+        console.info(`获取到${moreVideos.length}个新视频`);
+        
+        // 为视频数据添加缺失的属性以匹配UserVideoInfo接口
+        const processedVideos: UserVideoInfo[] = moreVideos.map((video): UserVideoInfo => {
+          return {
+            id: video.id,
+            bvid: video.bvid,
+            title: video.title,
+            pic: video.pic,
+            duration: video.duration,
+            view: video.view,
+            danmaku: video.danmaku,
+            like: video.like,
+            coin: video.coin,
+            share: video.share,
+            favorite: video.favorite,
+            reply: video.reply,
+            owner_name: video.name,
+            owner_face: video.face,
+            pubdate: video.pubdate,
+            tname: video.tname,
+            download_link: video.download_link,
+            current_viewers: video.current_viewers,
+            quality: video.quality,
+            aid: video.aid,
+            desc: video.desc,
+            name: video.name,
+            face: video.face,
+            cid: video.cid,
+            relation_type: video.relation_type,
+            relation_created_at: video.relation_created_at,
+            relation_desc: video.relation_desc
+          };
+        });
+        
+        // 预加载前5个视频的播放链接
+        const videosToPreload = processedVideos.slice(0, 5);
+        await this.preloadVideoLinks(videosToPreload);
+        
+        // 将所有新视频添加到列表
+        for (const videoInfo of processedVideos) {
+          const videoData: VideoData = {
+            description: videoInfo.title,
+            head: videoInfo.pic || $r('app.media.photo35'),
+            video: videoInfo.download_link || '',
+            audioUrl: '',
+            bvid: videoInfo.bvid,
+            aid: String(videoInfo.id),
+            cid: '0',
+            name: videoInfo.name,
+            face: videoInfo.face || 'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
+            view: String(videoInfo.view),
+            like: String(videoInfo.like),
+            barrage: String(videoInfo.danmaku),
+            time: String(videoInfo.duration),
+            pubdate: String(videoInfo.pubdate),
+            coins: String(videoInfo.coin),
+            favorites: String(videoInfo.favorite),
+            shares: String(videoInfo.share),
+            reply: String(videoInfo.reply),
+            tname: videoInfo.tname,
+            controller: this.myController,
+            auto: false,
+            play: false,
+            index: this.datas.totalCount().toString(),
+            total: String(videoInfo.current_viewers)
+          };
+          
+          this.datas.pushData(videoData);
+        }
+        
+        console.info('新视频已添加到列表，预加载完成');
+      }
+      
+    } catch (error) {
+      console.error('加载更多视频失败:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // 预加载视频播放链接
+  private async preloadVideoLinks(videos: UserVideoInfo[]) {
+    try {
+      console.info(`开始预加载${videos.length}个视频的播放链接`);
+      
+      const preloadPromises = videos.map(async (video: UserVideoInfo, index: number) => {
+        try {
+          if (video.bvid) {
+            const videoUrl = `https://www.bilibili.com/video/${video.bvid}`;
+            const token = await tokenManager.getToken(this.context!);
+            if (!token) {
+              console.error('用户未登录，无法预加载视频');
+              return;
+            }
+            const result = await apiService.parseVideo(token, videoUrl);
+            if (result && result.play_info) {
+               console.info(`视频${index + 1}预加载成功: ${video.bvid}`);
+               // 将预加载的链接存储起来，供后续使用
+               video.preloaded_url = result.play_info?.video_url || '';
+               video.preloaded_audio = result.play_info?.audio_url || '';
+             }
+          }
+        } catch (error) {
+          console.error(`预加载视频${index + 1}失败:`, error);
+        }
+      });
+      
+      // 并发预加载，但不等待全部完成
+      Promise.allSettled(preloadPromises).then(() => {
+        console.info('视频预加载批次完成');
+      });
+      
+    } catch (error) {
+      console.error('预加载视频链接失败:', error);
+    }
+  }
+
+  // 更新当前观看人数
+  private updateCurrentViewers(index: number) {
+    try {
+      const currentVideo = this.datas.getData(index);
+      if (currentVideo && currentVideo.total) {
+        this.totalindex = (parseInt(currentVideo.total) || 0).toString();
+      }
+    } catch (error) {
+      console.error('更新观看人数失败:', error);
+    }
+  }
   onPageShow(): void {
     const currentData = this.datas.getData(this.index);
     if (currentData && currentData.controller) {
@@ -454,10 +636,13 @@ export struct VideoPlayer {
         .vertical(true)
         .itemSpace(0)
         .curve(curves.interpolatingSpring(-1, 1, 328, 34))
-        .onChange((index) => {
+        .onChange(async (index) => {
           this.index = index;
           this.playBoo = true;
           videoIndex = index;
+          
+          // 动态预加载机制：当用户滑动到某个视频时，预加载后续视频
+          await this.handleVideoSwipe(index);
         })
       }
       .width('100%')
