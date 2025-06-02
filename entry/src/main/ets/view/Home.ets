@@ -27,6 +27,12 @@ interface BilibiliAuthInfo {
   dedeuserid: string;
 }
 
+// 定义用户信息接口
+interface UserInfo {
+  name?: string;
+  email?: string;
+}
+
 // 定义视频所有者接口
 interface VideoOwner {
   name: string;
@@ -113,43 +119,112 @@ export struct Home {
   }
 
   async aboutToAppear() {
-    await this.loadUserToken(); // 加载用户token
+    // 延迟执行，确保UIAbilityContext已经设置完成
+    setTimeout(async () => {
+      await this.loadUserToken();
+    }, 100);
   }
 
   async loadUserToken() {
-    try {
-      const context = this.getUIAbilityContext();
-      if (!context) {
-        console.error('无法获取UIAbilityContext');
-        await this.loadData();
-        return;
+    // 🔥 优先检查AppStorage中是否有已验证的token
+    const verifiedToken = AppStorage.get('verifiedToken') as string;
+    const tokenVerified = AppStorage.get('tokenVerified') as boolean;
+    const userInfo = AppStorage.get('userInfo') as UserInfo;
+    
+    if (verifiedToken && tokenVerified) {
+      console.log('🎯 发现已验证的token，直接使用');
+      this.userToken = verifiedToken;
+      console.log('✅ 使用已验证的token:', verifiedToken.substring(0, 10) + '...');
+      
+      if (userInfo) {
+        console.log('📋 用户信息:', userInfo.name, userInfo.email);
       }
       
-      const token = await tokenManager.getToken(context);
-      if (token) {
-        this.userToken = token;
-        console.log('成功获取用户token:', token.substring(0, 10) + '...');
+      // 直接尝试加载哔哩哔哩鉴权信息和推荐视频
+      try {
         await this.loadBilibiliAuthInfo();
+        console.log('🎉 鉴权信息加载成功，尝试加载推荐视频');
         await this.loadRecommendVideos();
-      } else {
-        console.log('没有找到用户token，使用备用方式加载数据');
-        // 如果没有token，使用原来的方式加载数据
-        await this.loadData();
+      } catch (authError) {
+        console.warn('⚠️ 鉴权信息加载失败，但token有效，直接尝试加载推荐视频:', authError);
+        await this.loadRecommendVideos();
       }
-    } catch (error) {
-      console.error('获取用户token失败:', error);
-      await this.loadData();
+      return;
+    }
+    
+    // 如果AppStorage中没有已验证的token，则使用原有逻辑
+    console.log('🔍 AppStorage中没有已验证token，尝试从本地存储获取');
+    
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    while (retryCount < maxRetries) {
+      try {
+        const context = this.getUIAbilityContext();
+        if (!context) {
+          console.warn(`第${retryCount + 1}次尝试：无法获取UIAbilityContext，等待重试...`);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise<void>(resolve => setTimeout(resolve, 200 * retryCount)); // 递增延迟
+            continue;
+          } else {
+            console.error('多次尝试后仍无法获取UIAbilityContext，使用备用方式加载数据');
+            await this.loadData();
+            return;
+          }
+        }
+        
+        console.log('成功获取UIAbilityContext，开始获取token');
+        const token = await tokenManager.getToken(context);
+        if (token) {
+          this.userToken = token;
+          console.log('✅ 成功获取用户token:', token.substring(0, 10) + '...');
+          
+          // 先尝试加载哔哩哔哩鉴权信息
+          try {
+            await this.loadBilibiliAuthInfo();
+            console.log('🎉 鉴权信息加载成功，尝试加载推荐视频');
+            await this.loadRecommendVideos();
+          } catch (authError) {
+            console.warn('⚠️ 鉴权信息加载失败，但token有效，直接尝试加载推荐视频:', authError);
+            await this.loadRecommendVideos();
+          }
+        } else {
+          console.log('⚠️ 没有找到用户token，使用备用方式加载数据');
+          await this.loadData();
+        }
+        break; // 成功执行，跳出循环
+      } catch (error) {
+        console.error(`第${retryCount + 1}次获取用户token失败:`, error);
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          console.error('多次尝试后仍无法获取token，使用备用方式加载数据');
+          await this.loadData();
+        } else {
+          await new Promise<void>(resolve => setTimeout(resolve, 200 * retryCount));
+        }
+      }
     }
   }
 
   async loadBilibiliAuthInfo(): Promise<void> {
     try {
       if (!this.userToken) {
-        console.warn('用户token为空，无法获取哔哩哔哩鉴权信息');
+        console.warn('⚠️ 用户token为空，无法获取哔哩哔哩鉴权信息');
         return;
       }
 
+      console.log('🔄 开始获取哔哩哔哩鉴权信息...');
       const authInfo = await apiService.getBilibiliAuthInfo(this.userToken);
+      
+      console.log('📥 API返回的鉴权信息:', {
+        nickname: authInfo?.nickname,
+        dedeuserid: authInfo?.dedeuserid,
+        avatar: authInfo?.avatar ? '有头像' : '无头像',
+        hasCookies: !!authInfo?.cookies,
+        hasSessdata: !!authInfo?.cookies?.SESSDATA,
+        sessdataLength: authInfo?.cookies?.SESSDATA?.length || 0
+      });
       
       // 验证返回的数据完整性
       if (authInfo && authInfo.cookies && authInfo.cookies.SESSDATA) {
@@ -158,19 +233,26 @@ export struct Home {
           avatar: authInfo.avatar || '',
           dedeuserid: authInfo.dedeuserid || ''
         };
-        console.log('获取哔哩哔哩鉴权信息成功:', {
+        console.log('✅ 获取哔哩哔哩鉴权信息成功:', {
           nickname: authInfo.nickname,
           dedeuserid: authInfo.dedeuserid,
-          hasValidSessdata: !!authInfo.cookies.SESSDATA
+          hasValidSessdata: !!authInfo.cookies.SESSDATA,
+          sessdataPreview: authInfo.cookies.SESSDATA.substring(0, 20) + '...'
         });
       } else {
-        console.error('获取的鉴权信息不完整:', authInfo);
-        throw new Error('鉴权信息格式错误');
+        console.error('❌ 获取的鉴权信息不完整:', {
+          hasAuthInfo: !!authInfo,
+          hasCookies: !!authInfo?.cookies,
+          hasSessdata: !!authInfo?.cookies?.SESSDATA,
+          rawData: authInfo
+        });
+        throw new Error('鉴权信息格式错误或缺少SESSDATA');
       }
     } catch (error) {
-      console.error('获取哔哩哔哩鉴权信息失败:', error);
+      console.error('❌ 获取哔哩哔哩鉴权信息失败:', error);
       // 清空鉴权信息
       this.bilibiliAuthInfo = null;
+      throw new Error(error instanceof Error ? error.message : String(error)); // 重新抛出错误，让调用方知道失败了
     }
   }
 
@@ -220,26 +302,48 @@ export struct Home {
   private async loadData(): Promise<void> {
     try {
       let sessdata: string = '';
-      
+      let useBackupSessdata = false;
+      // 如果正在加载token，等待一段时间
+      if (!this.userToken) {
+        const verifiedToken = AppStorage.get('verifiedToken') as string;
+        if (verifiedToken) {
+          this.userToken = verifiedToken;
+        }
+      }
       // 如果有用户token，尝试从API获取最新的SESSDATA
       if (this.userToken) {
+        console.log('🔄 检测到用户token，尝试获取动态SESSDATA...');
         try {
           const authInfo = await apiService.getBilibiliAuthInfo(this.userToken);
-          console.log('获取鉴权信息成功:', authInfo)
-          sessdata = authInfo.cookies.SESSDATA;
-          console.log('成功获取动态SESSDATA');
+          console.log('📋 获取鉴权信息成功:', {
+            nickname: authInfo.nickname,
+            dedeuserid: authInfo.dedeuserid,
+            hasSessdata: !!authInfo.cookies?.SESSDATA
+          });
+          
+          if (authInfo.cookies && authInfo.cookies.SESSDATA) {
+            sessdata = authInfo.cookies.SESSDATA;
+            console.log('✅ 成功获取动态SESSDATA');
+          } else {
+            console.warn('⚠️ API返回的鉴权信息中没有SESSDATA，使用备用方案');
+            useBackupSessdata = true;
+          }
         } catch (error) {
-          console.error('获取动态SESSDATA失败，使用备用方案:', error);
-          // 如果API获取失败，使用备用的SESSDATA
-          sessdata = '59a10793,1762276359,7f149*51CjBbahzoY1V9kQMXI0YfxO_OQE5JrLc-MQowZ4rizmyd6DSacH1NSjwQPSxNII6BYEISVlpWZ1N3TlRmU05BVUxlRXB4ZG5vSVpiNjZrNVFzNk43cDNjQWQ5Y0pqU3ltVXhmaHA1cEVMTlhNZXVsTVNNM21mWUVXLW5JckV1eEtPd0c3Rm1vMVJBIIEC';
+          console.error('❌ 获取动态SESSDATA失败，使用备用方案:', error);
+          useBackupSessdata = true;
         }
       } else {
-        // 如果没有token，使用备用的SESSDATA
-        sessdata = '59a10793,1762276359,7f149*51CjBbahzoY1V9kQMXI0YfxO_OQE5JrLc-MQowZ4rizmyd6DSacH1NSjwQPSxNII6BYEISVlpWZ1N3TlRmU05BVUxlRXB4ZG5vSVpiNjZrNVFzNk43cDNjQWQ5Y0pqU3ltVXhmaHA1cEVMTlhNZXVsTVNNM21mWUVXLW5JckV1eEtPd0c3Rm1vMVJBIIEC';
-
-        console.log('没有token，使用备用SESSDATA');
+        console.log('⚠️ 没有token，使用备用SESSDATA');
+        useBackupSessdata = true;
       }
-      console.log('目前使用的SESSDATA',sessdata);
+      
+      // 使用备用SESSDATA
+      if (useBackupSessdata) {
+        sessdata = '59a10793,1762276359,7f149*51CjBbahzoY1V9kQMXI0YfxO_OQE5JrLc-MQowZ4rizmyd6DSacH1NSjwQPSxNII6BYEISVlpWZ1N3TlRmU05BVUxlRXB4ZG5vSVpiNjZrNVFzNk43cDNjQWQ5Y0pqU3ltVXhmaHA1cEVMTlhNZXVsTVNNM21mWUVXLW5JckV1eEtPd0c3Rm1vMVJBIIEC';
+        console.log('🔧 已设置备用SESSDATA');
+      }
+      
+      console.log('🎯 当前使用的SESSDATA:', sessdata.substring(0, 20) + '...');
       const response = await requestSelf(sessdata, http.RequestMethod.GET, null);
 
       if (response) {

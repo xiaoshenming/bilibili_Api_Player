@@ -85,9 +85,16 @@ struct Index {
         const statusResult = await apiService.checkStatus(token);
         
         if (statusResult.success && statusResult.data) {
-          // Token有效，用户状态正常，跳转到主页
+          // Token有效，用户状态正常，将验证信息存储到AppStorage
           console.info('Token验证成功，用户状态正常，跳转到主页');
           console.info(`用户信息: ${statusResult.data.name} (${statusResult.data.email})`);
+          
+          // 🔥 关键修复：将验证成功的token和用户信息存储到AppStorage
+          AppStorage.setOrCreate('verifiedToken', token);
+          AppStorage.setOrCreate('userInfo', statusResult.data);
+          AppStorage.setOrCreate('tokenVerified', true);
+          
+          console.info('✅ 已将验证成功的token存储到AppStorage');
           
           router.replaceUrl({
             url: 'pages/MainPage'
