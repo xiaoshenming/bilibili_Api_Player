@@ -461,46 +461,63 @@ export struct Home {
       Column() {
         // 顶部标题栏，包含用户信息
         Row() {
-          Text("在线首页api获取")
-            .fontSize(18)
+          Text("哔哩哔哩")
+            .fontSize(20)
             .fontColor(Color.White)
             .fontWeight(FontWeight.Bold)
             .layoutWeight(1)
-            .textAlign(TextAlign.Center)
+            .textAlign(TextAlign.Start)
+            .margin({ left: 16 })
           
-          // 用户鉴权信息显示
+          // 用户鉴权信息显示 - 移到右上角
           if (this.bilibiliAuthInfo) {
             Row() {
-              if (this.bilibiliAuthInfo.avatar) {
-                Image(this.bilibiliAuthInfo.avatar)
-                  .width(24)
-                  .height(24)
-                  .borderRadius(12)
-                  .margin({ right: 6 })
-              }
               Text(this.bilibiliAuthInfo.nickname)
-                .fontSize(12)
+                .fontSize(14)
                 .fontColor(Color.White)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .margin({ right: 8 })
+              
+              if (this.bilibiliAuthInfo.avatar) {
+                Image(this.bilibiliAuthInfo.avatar)
+                  .width(32)
+                  .height(32)
+                  .borderRadius(16)
+                  .border({ width: 2, color: Color.White })
+              }
             }
-            .padding({ right: 12 })
+            .padding({ right: 16 })
+            .alignItems(VerticalAlign.Center)
           } else if (this.userToken) {
-            Text("登录中...")
-              .fontSize(12)
-              .fontColor('#CCCCCC')
-              .padding({ right: 12 })
+            Row() {
+              Text("登录中...")
+                .fontSize(14)
+                .fontColor('#FFFFFF')
+                .margin({ right: 8 })
+              
+              Circle({ width: 32, height: 32 })
+                .fill('#FFFFFF33')
+                .margin({ right: 16 })
+            }
           } else {
-            Text("未登录")
-              .fontSize(12)
-              .fontColor('#CCCCCC')
-              .padding({ right: 12 })
+            Row() {
+              Text("未登录")
+                .fontSize(14)
+                .fontColor('#FFFFFF')
+                .margin({ right: 8 })
+              
+              Circle({ width: 32, height: 32 })
+                .fill('#FFFFFF33')
+                .margin({ right: 16 })
+            }
           }
         }
         .width("100%")
         .height("10%")
-        .backgroundColor('#0080DC')
-        .padding({ left: 16, right: 4 })
+        // .backgroundColor('#FB7299')
+        .backgroundColor('#ff6699')
+        .padding({ top: 8, bottom: 8 })
         .justifyContent(FlexAlign.SpaceBetween)
         .alignItems(VerticalAlign.Center)
         Tabs({ barPosition: BarPosition.Start ,index: this.bottomTabIndex})
@@ -510,118 +527,91 @@ export struct Home {
 
           TabContent() {
             List({ space: 5 }) {
-              // 用户信息区域
-              if (this.bilibiliAuthInfo) {
-                ListItem() {
-                  Row() {
-                    Image(this.bilibiliAuthInfo.avatar)
-                      .width(40)
-                      .height(40)
-                      .borderRadius(20)
-                      .objectFit(ImageFit.Cover)
-                      .margin({ right: 10 })
-                    
-                    Column() {
-                      Text(`欢迎回来，${this.bilibiliAuthInfo.nickname}`)
-                        .fontSize(16)
-                        .fontWeight(FontWeight.Medium)
-                        .fontColor('#333333')
-                      Text(`UID: ${this.bilibiliAuthInfo.dedeuserid}`)
-                        .fontSize(12)
-                        .fontColor('#999999')
-                        .margin({ top: 2 })
-                    }
-                    .alignItems(HorizontalAlign.Start)
-                    .layoutWeight(1)
-                  }
-                  .width('100%')
-                  .padding({ left: 15, right: 15, top: 10, bottom: 10 })
-                  .backgroundColor('#f8f9fa')
-                  .borderRadius(8)
-                }
-                .margin({ bottom: 10 })
-              }
               
               LazyForEach(this.datas, (item: VideoData, index: number) => {
                 ListItem() {
-                  RelativeContainer() {
-                    Image(item.head)
-                      .width('100%')
-                      .height(130)   // 设置固定高度
-                      .aspectRatio(0)
-                      .objectFit(ImageFit.Cover)
-                      .alignRules({
-                        top: { anchor: "__container__", align: VerticalAlign.Top },
-                        left: { anchor: "__container__", align: HorizontalAlign.Start }
-                      })
-                      .id("home_image1")
+                  Column() {
+                    // 图片容器
+                    Stack() {
+                      Image(item.head)
+                        .width('100%')
+                        .height(130)
+                        .objectFit(ImageFit.Cover)
+                        .borderRadius({ topLeft: 8, topRight: 8 })
 
-                    Text(item.description)
-                      .fontSize(14)
-                      .padding({ top: 10, left: 10, bottom: 5 })
-                      .fontWeight(FontWeight.Normal)
-                      .letterSpacing(1)
-                      .lineHeight(20)
-                      .maxLines(2)  // 设置最多两行
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      .alignRules({
-                        top: { anchor: "image1", align: VerticalAlign.Bottom },
-                        left: { anchor: "image1", align: HorizontalAlign.Start }
-                      })
-                      .id("title");
-
-                    // 视频统计信息
-                    Row() {
-                      if (Number(item.view) > 0) {
-                        Text(`${this.formatNumber(Number(item.view))}播放`)
-                          .fontSize(10)
-                          .fontColor('#999999')
-                          .margin({ right: 8 })
-                      }
-                      if (Number(item.barrage) > 0) {
-                        Text(`${this.formatNumber(Number(item.barrage))}弹幕`)
-                          .fontSize(10)
-                          .fontColor('#999999')
-                          .margin({ right: 8 })
-                      }
+                      // 时长显示在图片右下角
                       if (Number(item.time) > 0) {
                         Text(this.formatDuration(Number(item.time)))
-                          .fontSize(10)
-                          .fontColor('#999999')
-                      }
-                    }
-                    .padding({ left: 10, top: 2 })
-                    .alignRules({
-                      top: { anchor: "title", align: VerticalAlign.Bottom },
-                      left: { anchor: "__container__", align: HorizontalAlign.Start }
-                    })
-                    .id("stats")
-
-                    Row() {
-                      Text(item.name)
-                        .fontSize(12)
-                        .fontColor('#666666')
-                        .fontWeight(FontWeight.Normal)
-                        .maxLines(1)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                        .layoutWeight(1)
-                      
-                      if (item.tname && item.tname !== '') {
-                        Text(item.tname)
-                          .fontSize(10)
-                          .fontColor('#ff6b9d')
-                          .backgroundColor('#fff0f5')
+                          .fontSize(11)
+                          .fontColor(Color.White)
+                          .backgroundColor('rgba(0, 0, 0, 0.7)')
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                          .borderRadius(10)
-                          .margin({ left: 5 })
+                          .borderRadius(4)
+                          .position({ x: '100%', y: '100%' })
+                          .translate({ x: -8, y: -8 })
+                          .markAnchor({ x: '100%', y: '100%' })
                       }
                     }
-                    .padding({ left: 10, right: 10, bottom: 10 })
-                    .alignRules({
-                      bottom: { anchor: "__container__", align: VerticalAlign.Bottom },
-                      left: { anchor: "__container__", align: HorizontalAlign.Start },
-                      right: { anchor: "__container__", align: HorizontalAlign.End }
-                    })
+                    .width('100%')
+                    .height(130)
+                    
+                    // 视频信息区域
+                    Column() {
+                      // 视频标题
+                      Text(item.description)
+                        .fontSize(14)
+                        .fontWeight(FontWeight.Medium)
+                        .fontColor('#333333')
+                        .maxLines(2)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        .lineHeight(20)
+                        .width('100%')
+                        .margin({ bottom: 8 })
+                      
+                      // 作者信息和分类标签
+                      Row() {
+                        Text(item.name)
+                          .fontSize(12)
+                          .fontColor('#666666')
+                          .fontWeight(FontWeight.Normal)
+                          .maxLines(1)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                          .layoutWeight(1)
+                        
+                        if (item.tname && item.tname !== '') {
+                          Text(item.tname)
+                            .fontSize(10)
+                            .fontColor('#FB7299')
+                            .backgroundColor('#FFF0F5')
+                            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                            .borderRadius(10)
+                        }
+                      }
+                      .width('100%')
+                      .margin({ bottom: 6 })
+                      
+                      // 播放量和弹幕数
+                      Row() {
+                        if (Number(item.view) > 0) {
+                          Text(`${this.formatNumber(Number(item.view))}播放`)
+                            .fontSize(11)
+                            .fontColor('#999999')
+                            .margin({ right: 12 })
+                        }
+                        if (Number(item.barrage) > 0) {
+                          Text(`${this.formatNumber(Number(item.barrage))}弹幕`)
+                            .fontSize(11)
+                            .fontColor('#999999')
+                        }
+
+                        Blank()
+                      }
+                      .width('100%')
+                    }
+                    .padding({ left: 12, right: 12, top: 10, bottom: 12 })
+                    .alignItems(HorizontalAlign.Start)
+                    .backgroundColor(Color.White)
+                    .borderRadius({ bottomLeft: 8, bottomRight: 8 })
                   }
                   .onClick(() => {
                     //点击之后跳转到Videoplay并触发视频解析
@@ -630,15 +620,12 @@ export struct Home {
                     // 传递bvidflag参数来触发视频解析逻辑
                     router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
                   })
-                  .borderRadius(5)
+                  .borderRadius(8)
                   .width('100%')
-                  .height(240)
-                  .backgroundColor('#ffffff')
-                  .shadow({ radius: 2, color: '#00000010', offsetX: 0, offsetY: 1 });
+                  .backgroundColor(Color.White)
+                  .shadow({ radius: 4, color: '#00000015', offsetX: 0, offsetY: 2 });
                 }
-                .borderRadius(5)
-                .height(240)
-                .margin({ bottom: 8 });
+                .margin({ bottom: 12 });
               });
             }
             .onReachEnd(() => {
