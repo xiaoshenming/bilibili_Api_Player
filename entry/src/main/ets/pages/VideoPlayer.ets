@@ -26,6 +26,7 @@ export struct VideoPlayer {
   @State mp4: string = '';
   @State isLoading: boolean = false;
   @State fromParse: boolean = false; // 标识是否来自解析页面
+  @State playbackMode: string = 'realtime'; // 播放模式：'realtime' 或 'history'
   scroller: Scroller = new Scroller();
   private topTabListData: TopTabContent = new TopTabContent();
   private context = getContext(this) as common.UIAbilityContext;
@@ -55,6 +56,12 @@ export struct VideoPlayer {
       
       // 检查是否来自解析页面
       this.fromParse = Boolean(params["fromParse"]) || false;
+      
+      // 接收播放模式参数
+      if (params["playbackMode"] && typeof params["playbackMode"] === 'string') {
+        this.playbackMode = params["playbackMode"] as string;
+        console.log(`🎬 播放模式: ${this.playbackMode}`);
+      }
       
       // 优先处理传入的视频数据列表（来自Dynamic页面或Home页面）
       if (params["videoDatas"] && Array.isArray(params["videoDatas"]) && params["videoDatas"].length > 0) {
@@ -117,6 +124,86 @@ export struct VideoPlayer {
     if (params["bvidflag"] && typeof params["bvidflag"] === 'string') {
       // 异步解析，不阻塞用户观看历史视频
       this.parseVideoFromParams(params, true);
+    }
+  }
+
+  // 历史模式下加载历史视频列表用于播放
+  private async loadHistoryVideosForPlayback(currentIndex: number) {
+    if (!this.userToken) {
+      console.warn('⚠️ 没有用户token，无法加载历史视频');
+      return;
+    }
+
+    try {
+      console.log(`🔄 历史模式：加载历史视频列表，当前索引: ${currentIndex}`);
+      
+      // 检查是否已经是历史视频列表（通过检查第一个视频的来源）
+      const firstVideo = this.datas.getData(0);
+      const isAlreadyHistoryList = firstVideo && firstVideo.tname; // 历史视频有tname字段
+      
+      if (!isAlreadyHistoryList) {
+        // 如果当前不是历史视频列表，则替换为历史视频列表
+        const historyVideos = await apiService.getUserVideos(this.userToken);
+        
+        if (historyVideos && historyVideos.length > 0) {
+          console.log(`🔄 替换为历史视频列表，共${historyVideos.length}个视频`);
+          
+          // 清空当前播放列表
+          this.datas.clearData();
+          
+          // 转换为VideoData格式并添加到播放列表
+          const historyVideoData = historyVideos.map((item, index) => {
+            const videoData: VideoData = {
+              description: item.title,
+              head: item.pic,
+              video: item.download_link,
+              audioUrl: '',
+              bvid: item.bvid,
+              aid: item.aid || '',
+              cid: item.cid || '',
+              name: item.name,
+              face: item.face,
+              view: item.view || '0',
+              total: item.current_viewers || '0',
+              like: item.like || '0',
+              barrage: item.danmaku || '0',
+              time: item.duration || '0',
+              pubdate: item.pubdate || '0',
+              coins: item.coin || '0',
+              favorites: item.favorite || '0',
+              shares: item.share || '0',
+              reply: item.reply || '0',
+              tname: item.tname || '',
+              controller: this.myController,
+              auto: true,
+              play: true,
+              index: String(index),
+              preloaded_url: item.download_link
+            };
+            return videoData;
+          });
+          
+          // 添加历史视频到播放列表
+          historyVideoData.forEach(video => {
+            this.datas.pushData(video);
+          });
+          
+          // 重置播放索引到第一个历史视频
+          this.index = 0;
+          
+          console.log(`✅ 历史模式：成功替换为${historyVideoData.length}个历史视频`);
+        }
+      } else {
+        // 如果已经是历史视频列表，检查是否需要加载更多
+        const totalCount = this.datas.totalCount();
+        const remainingVideos = totalCount - currentIndex;
+        
+        if (remainingVideos <= 3) {
+          console.log(`🔄 历史模式：当前已是历史列表，剩余视频${remainingVideos}个，无需加载更多`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 历史模式加载视频失败:', error);
     }
   }
 
@@ -736,11 +823,16 @@ export struct VideoPlayer {
           this.playBoo = true;
           videoIndex = index;
           
-          // 动态预加载机制：当用户滑动到某个视频时，预加载后续视频
-          // 使用异步处理，避免阻塞UI
-          this.smartPreloadAdjacentVideos(index).catch((error: Error) => {
-            console.error('处理视频切换失败:', error);
-          });
+          // 根据播放模式决定滑动行为
+          if (this.playbackMode === 'history') {
+            // 历史模式：滑动时加载历史视频列表
+            await this.loadHistoryVideosForPlayback(index);
+          } else {
+            // 实时模式：动态预加载机制，预加载后续推荐视频
+            this.smartPreloadAdjacentVideos(index).catch((error: Error) => {
+              console.error('处理视频切换失败:', error);
+            });
+          }
         })
       }
       .width('100%')

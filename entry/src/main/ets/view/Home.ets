@@ -105,6 +105,8 @@ export struct Home {
   @State hasMore: boolean = true;
   @State bilibiliAuthInfo: BilibiliAuthInfo | null = null;
   @State userToken: string = '';
+  @State isHistoryMode: boolean = true; // 默认为历史模式
+  @State historyVideos: Array<VideoData> = []; // 历史视频数据
 
   @Styles
   listCard() {
@@ -122,6 +124,7 @@ export struct Home {
     // 延迟执行，确保UIAbilityContext已经设置完成
     setTimeout(async () => {
       await this.loadUserToken();
+      // 首页始终显示推荐内容，不根据模式加载不同数据
     }, 100);
   }
 
@@ -460,6 +463,78 @@ export struct Home {
     }
   }
 
+  // 模式切换方法
+  private toggleMode() {
+    this.isHistoryMode = !this.isHistoryMode;
+    console.log(`🔄 切换到${this.isHistoryMode ? '历史' : '实时'}模式`);
+    // 模式切换只影响点击视频后的播放列表，不影响首页显示内容
+  }
+
+  // 加载历史视频数据
+  private async loadHistoryVideos(): Promise<void> {
+    if (!this.userToken) {
+      console.warn('⚠️ 没有用户token，无法加载历史视频');
+      return;
+    }
+
+    this.isLoading = true;
+    try {
+      console.log('🔄 开始加载历史视频数据...');
+      const videos = await apiService.getUserVideos(this.userToken);
+      
+      if (videos && videos.length > 0) {
+        // 转换为VideoData格式
+        const historyVideoData = videos.map((item, index) => {
+          const videoData: VideoData = {
+            description: item.title,
+            head: item.pic,
+            video: item.download_link,
+            audioUrl: '',
+            bvid: item.bvid,
+            aid: item.aid || '',
+            cid: item.cid || '',
+            name: item.name,
+            face: item.face,
+            view: item.view || '0',
+            total: item.current_viewers || '0',
+            like: item.like || '0',
+            barrage: item.danmaku || '0',
+            time: item.duration || '0',
+            pubdate: item.pubdate || '0',
+            coins: item.coin || '0',
+            favorites: item.favorite || '0',
+            shares: item.share || '0',
+            reply: item.reply || '0',
+            tname: item.tname || '',
+            controller: this.myController,
+            auto: true,
+            play: true,
+            index: String(index),
+            preloaded_url: item.download_link // 历史视频已有下载链接
+          };
+          return videoData;
+        });
+        
+        // 存储历史视频数据
+        this.historyVideos = historyVideoData;
+        
+        // 清空并重新填充数据源
+        this.datas.clearData();
+        historyVideoData.forEach(video => {
+          this.datas.pushData(video);
+        });
+        
+        console.log(`✅ 成功加载${historyVideoData.length}个历史视频`);
+      } else {
+        console.log('📭 没有找到历史视频数据');
+      }
+    } catch (error) {
+      console.error('❌ 加载历史视频失败:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
   // 重新排序视频列表，将指定索引的视频放在第一位
   private reorderVideosForPlayback(videos: VideoData[], targetIndex: number): VideoData[] {
     if (targetIndex < 0 || targetIndex >= videos.length) {
@@ -477,7 +552,7 @@ export struct Home {
   build() {
     Scroll() {
       Column() {
-        // 顶部标题栏，包含用户信息
+        // 顶部标题栏，包含用户信息和模式切换
         Row() {
           Text("哔哩哔哩")
             .fontSize(20)
@@ -486,6 +561,18 @@ export struct Home {
             .layoutWeight(1)
             .textAlign(TextAlign.Start)
             .margin({ left: 16 })
+          
+          // 模式切换按钮
+          Button(this.isHistoryMode ? "历史" : "实时")
+            .fontSize(12)
+            .fontColor(this.isHistoryMode ? '#ff6699' : Color.White)
+            .backgroundColor(this.isHistoryMode ? Color.White : 'rgba(255, 255, 255, 0.3)')
+            .borderRadius(12)
+            .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+            .margin({ right: 8 })
+            .onClick(() => {
+              this.toggleMode();
+            })
           
           // 用户鉴权信息显示 - 移到右上角
           if (this.bilibiliAuthInfo) {
@@ -639,38 +726,40 @@ export struct Home {
                     .borderRadius({ bottomLeft: 8, bottomRight: 8 })
                   }
                   .onClick(async () => {
-                    //点击之后跳转到Videoplay并传递完整的视频列表
-                    console.log(`视频名称: ${item.description}`);
-                    console.log(`BVID: ${item.bvid}`);
-                    
-                    try {
-                      // 获取当前所有视频数据
-                      const allVideos = this.datas.getAllData();
+                      console.log(`视频名称: ${item.description}`);
+                      console.log(`BVID: ${item.bvid}`);
+                      console.log(`当前模式: ${this.isHistoryMode ? '历史' : '实时'}`);
                       
-                      // 找到点击的视频在列表中的索引
-                      const clickedIndex = allVideos.findIndex(video => video.bvid === item.bvid);
-                      const startIndex = clickedIndex >= 0 ? clickedIndex : 0;
-                      
-                      // 重新排序视频列表，将点击的视频放在第一位
-                      const reorderedVideos = this.reorderVideosForPlayback(allVideos, startIndex);
-                      
-                      // 跳转到视频播放页面，传递完整的视频列表
-                      router.pushUrl({
-                        url: "pages/VideoPlayer",
-                        params: {
-                          videoDatas: reorderedVideos,
-                          bvidflag: item.bvid, // 保留bvidflag用于后台解析更高质量版本
-                          startIndex: 0, // 从重排后的第一个开始播放
-                          fromHome: true // 标识来自首页
-                        }
-                      });
-                      
-                    } catch (error) {
-                      console.error('处理视频点击失败:', error);
-                      // 如果处理失败，回退到原来的方式
-                      router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
-                    }
-                  })
+                      try {
+                        // 获取当前所有推荐视频数据
+                        const allVideos = this.datas.getAllData();
+                        
+                        // 找到点击的视频在列表中的索引
+                        const clickedIndex = allVideos.findIndex(video => video.bvid === item.bvid);
+                        const startIndex = clickedIndex >= 0 ? clickedIndex : 0;
+                        
+                        // 重新排序视频列表，将点击的视频放在第一位
+                        const reorderedVideos = this.reorderVideosForPlayback(allVideos, startIndex);
+                        
+                        // 跳转到视频播放页面，传递模式信息
+                        router.pushUrl({
+                          url: "pages/VideoPlayer",
+                          params: {
+                            videoDatas: reorderedVideos,
+                            bvidflag: item.bvid,
+                            startIndex: 0,
+                            fromHome: true,
+                            userToken: this.userToken,
+                            playbackMode: this.isHistoryMode ? 'history' : 'realtime' // 传递播放模式
+                          }
+                        });
+                        
+                      } catch (error) {
+                        console.error('处理视频点击失败:', error);
+                        // 如果处理失败，回退到原来的方式
+                        router.pushUrl({ url: "pages/VideoPlayer", params: { bvidflag: item.bvid } });
+                      }
+                    })
                   .borderRadius(8)
                   .width('100%')
                   .backgroundColor(Color.White)
@@ -680,9 +769,15 @@ export struct Home {
               });
             }
             .onReachEnd(() => {
-              this.onReachEnd()
-              console.log('触底')
-            })
+                // 首页始终加载推荐内容，不受模式影响
+                if (this.hasMore && !this.isLoading) {
+                  if (this.userToken) {
+                    this.loadRecommendVideos();
+                  } else {
+                    this.loadData();
+                  }
+                }
+              })
             .cachedCount(6)
             .lanes(2, 5)
             .width("100%")
