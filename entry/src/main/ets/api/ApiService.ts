@@ -15,8 +15,8 @@ class ApiService {
       const response = await httpRequest.request(url, {
         ...options,
         expectDataType: http.HttpDataType.STRING,
-        connectTimeout: 10000,
-        readTimeout: 10000,
+        connectTimeout: 30000,
+    readTimeout: 900000,
         header: {
           'Content-Type': 'application/json',
           ...options.header
@@ -271,8 +271,8 @@ class ApiService {
       const response = await httpRequest.request(url, {
         method: http.RequestMethod.GET,
         expectDataType: http.HttpDataType.STRING,
-        connectTimeout: 10000,
-        readTimeout: 10000,
+        connectTimeout: 30000,
+    readTimeout: 900000,
         header: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

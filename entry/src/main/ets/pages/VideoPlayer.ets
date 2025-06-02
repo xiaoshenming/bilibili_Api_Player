@@ -187,7 +187,7 @@ export struct VideoPlayer {
           // 使用新的完整视频处理流程，添加超时保护
           const apiPromise = bilibiliService.processVideoComplete(this.context, blibliurl);
           const timeoutPromise = new Promise<null>((_, reject) => {
-            setTimeout(() => reject(new Error('视频处理超时，请检查网络连接')), 600000); // 10分钟超时，适应较长的解析时间
+            setTimeout(() => reject(new Error('视频处理超时，请检查网络连接')), 900000); // 15分钟超时，适应ffmpeg较长的处理时间
           });
           
           console.info('开始等待API响应...');

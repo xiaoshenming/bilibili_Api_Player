@@ -174,8 +174,24 @@ class BilibiliService {
       console.info('processVideoComplete开始执行');
       console.info('输入参数 - url:', url);
       
-      // 第一步：处理视频
-      console.info('第一步：开始处理视频...');
+      // 第一步：解析视频信息（获取详细数据）
+      console.info('第一步：开始解析视频信息...');
+      const token = await tokenManager.getToken(context);
+      if (!token) {
+        console.error('token为空，用户未登录');
+        return null;
+      }
+      
+      // 先解析视频信息获取详细数据
+      const parseResult = await apiService.parseVideoDetails(token, url);
+      console.info('视频解析结果:', parseResult ? '成功' : '失败');
+      if (!parseResult) {
+        console.error('视频解析失败，返回null');
+        return null;
+      }
+      
+      // 第二步：处理视频（下载和转换）
+      console.info('第二步：开始处理视频...');
       const processResult = await this.processVideo(context, url);
       console.info('视频处理结果:', processResult ? '成功' : '失败');
       if (!processResult) {
@@ -183,8 +199,8 @@ class BilibiliService {
         return null;
       }
 
-      // 第二步：生成下载链接
-      console.info('第二步：开始生成下载链接...');
+      // 第三步：生成下载链接
+      console.info('第三步：开始生成下载链接...');
       const fileName = `${processResult.bvid}.mp4`;
       console.info('文件名:', fileName);
       const downloadResult = await this.generateDownloadLink(context, fileName);
@@ -194,28 +210,28 @@ class BilibiliService {
         return null;
       }
 
-      // 构造返回的视频信息
+      // 构造返回的视频信息，使用解析得到的详细数据
       const videoInfo: BilibiliVideoInfo = {
         videoUrl: downloadResult.downloadUrl,
-        audioUrl: '', // 如果需要单独的音频链接，可以在这里处理
+        audioUrl: parseResult.audioUrl || '', 
         bvid: processResult.bvid,
-        aid: String(processResult.id),
-        cid: '0', // 如果后端返回cid，可以添加到processVideo的返回类型中
-        tname: '', // 分区名称
-        pic: '', // 封面图片
+        aid: String(parseResult.aid || processResult.id),
+        cid: String(parseResult.cid || '0'),
+        tname: parseResult.tname || '', 
+        pic: parseResult.pic || '', 
         title: processResult.title,
-        desc: '', // 描述
-        duration: 0, // 时长
-        pubdate: 0, // 发布时间
-        name: '', // UP主名称
-        face: '', // UP主头像
-        view: 0, // 播放量
-        danmaku: 0, // 弹幕数
-        reply: 0, // 评论数
-        favorite: 0, // 收藏数
-        coin: 0, // 投币数
-        share: 0, // 分享数
-        like: 0 // 点赞数
+        desc: parseResult.desc || '', 
+        duration: parseResult.duration || 0, 
+        pubdate: parseResult.pubdate || 0, 
+        name: parseResult.name || '', 
+        face: parseResult.face || '', 
+        view: parseResult.view || 0, 
+        danmaku: parseResult.danmaku || 0, 
+        reply: parseResult.reply || 0, 
+        favorite: parseResult.favorite || 0, 
+        coin: parseResult.coin || 0, 
+        share: parseResult.share || 0, 
+        like: parseResult.like || 0 
       };
 
       return videoInfo;
