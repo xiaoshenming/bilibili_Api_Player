@@ -539,18 +539,43 @@ export struct Home {
                         .objectFit(ImageFit.Cover)
                         .borderRadius({ topLeft: 8, topRight: 8 })
 
-                      // 时长显示在图片右下角
-                      if (Number(item.time) > 0) {
-                        Text(this.formatDuration(Number(item.time)))
-                          .fontSize(11)
-                          .fontColor(Color.White)
-                          .backgroundColor('rgba(0, 0, 0, 0.7)')
-                          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                          .borderRadius(4)
-                          .position({ x: '100%', y: '100%' })
-                          .translate({ x: -8, y: -8 })
-                          .markAnchor({ x: '100%', y: '100%' })
+                      // 底部信息栏：播放量弹幕在左，时长在右
+                      Row() {
+                        // 播放量和弹幕数在左侧
+                        Row() {
+                          if (Number(item.view) > 0) {
+                            Text(`${this.formatNumber(Number(item.view))}播放`)
+                              .fontSize(11)
+                              .fontColor(Color.White)
+                              .margin({ right: 8 })
+                          }
+                          if (Number(item.barrage) > 0) {
+                            Text(`${this.formatNumber(Number(item.barrage))}弹幕`)
+                              .fontSize(11)
+                              .fontColor(Color.White)
+                          }
+                        }
+                        .backgroundColor('rgba(0, 0, 0, 0.7)')
+                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                        .borderRadius(4)
+                        
+                        Blank()
+                        
+                        // 时长在右侧
+                        if (Number(item.time) > 0) {
+                          Text(this.formatDuration(Number(item.time)))
+                            .fontSize(11)
+                            .fontColor(Color.White)
+                            .backgroundColor('rgba(0, 0, 0, 0.7)')
+                            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                            .borderRadius(4)
+                        }
                       }
+                      .width('100%')
+                      .padding({ left: 2, right: 2, bottom: 2 })
+                      .position({ x: 0, y: '100%' })
+                      .translate({ x: 0, y: -2 })
+                      .markAnchor({ x: 0, y: '100%' })
                     }
                     .width('100%')
                     .height(130)
@@ -586,25 +611,6 @@ export struct Home {
                             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                             .borderRadius(10)
                         }
-                      }
-                      .width('100%')
-                      .margin({ bottom: 6 })
-                      
-                      // 播放量和弹幕数
-                      Row() {
-                        if (Number(item.view) > 0) {
-                          Text(`${this.formatNumber(Number(item.view))}播放`)
-                            .fontSize(11)
-                            .fontColor('#999999')
-                            .margin({ right: 12 })
-                        }
-                        if (Number(item.barrage) > 0) {
-                          Text(`${this.formatNumber(Number(item.barrage))}弹幕`)
-                            .fontSize(11)
-                            .fontColor('#999999')
-                        }
-
-                        Blank()
                       }
                       .width('100%')
                     }
