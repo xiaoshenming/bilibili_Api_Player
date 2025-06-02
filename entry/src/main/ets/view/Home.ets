@@ -914,30 +914,35 @@ export struct Home {
                             finalVideos = [clickedVideoData, ...allHistoryVideoData];
                             startIndex = 0;
                             
-                            // 同步解析点击的推荐视频，等待完成后再跳转
-                            console.log(`🎯 优先为点击的推荐视频获取播放链接: ${item.bvid}`);
-                            await this.preloadSingleRecommendedVideo(clickedVideoData);
+                            // 历史模式：异步解析推荐视频，不等待解析完成就跳转
+                            console.log(`🎯 历史模式：开始异步解析推荐视频: ${item.bvid}`);
                             
-                            // 验证第一个视频是否有有效的播放链接
-                            if (!clickedVideoData.video || !clickedVideoData.video.toString().startsWith('http')) {
-                              console.error(`❌ 推荐视频 ${item.bvid} 没有获取到有效播放链接，无法播放`);
-                              promptAction.showToast({ message: '视频链接获取失败，请重试' });
-                              return;
-                            }
+                            // 构造视频URL用于解析
+                            const videoUrl = `https://www.bilibili.com/video/${item.bvid}`;
                             
-                            console.log(`✅ 推荐视频 ${item.bvid} 播放链接获取成功: ${clickedVideoData.video}`);
+                            // 异步调用视频解析接口，不等待完成
+                            this.processRecommendedVideoAsync(videoUrl, item.bvid, finalVideos).catch((error: Error) => {
+                              console.error(`❌ 异步解析视频失败: ${item.bvid}`, error);
+                            });
+                            
+                            console.log(`🚀 推荐视频 ${item.bvid} 解析任务已提交，用户可以观看历史视频等待解析完成`);
                             
                             // 预加载其他历史视频的播放链接（异步进行，不阻塞跳转）
                             console.log('🚀 开始预加载其他历史视频的播放链接...');
                             this.preloadHistoryVideos(finalVideos.slice(1, 6)); // 异步预加载第2-6个视频
                           }
                           
-                          // 最终验证第一个视频的播放链接
+                          // 最终验证第一个视频的播放链接（历史模式下推荐视频可能正在异步解析）
                           console.log(`🔍 最终验证第一个视频播放链接: ${finalVideos[0].video}`);
                           if (!finalVideos[0].video || !finalVideos[0].video.toString().startsWith('http')) {
-                            console.error(`❌ 第一个视频没有有效的播放链接，无法播放`);
-                            promptAction.showToast({ message: '视频链接无效，请重试' });
-                            return;
+                            // 在历史模式下，如果第一个视频是推荐视频且正在解析，这是正常的
+                            if (clickedHistoryIndex < 0) {
+                              console.log(`⏳ 推荐视频 ${finalVideos[0].bvid} 正在异步解析中，用户可以先观看历史视频`);
+                            } else {
+                              console.error(`❌ 历史视频没有有效的播放链接，无法播放`);
+                              promptAction.showToast({ message: '视频链接无效，请重试' });
+                              return;
+                            }
                           }
                           
                           // 跳转到视频播放页面，传递与Dynamic.ets完全相同的参数
@@ -1102,7 +1107,70 @@ export struct Home {
     }
   }
   
-  // 异步解析推荐视频 - 使用与Dynamic.ets相同的方法
+  // 异步解析推荐视频 - 调用/video/process接口进行真正的视频解析
+  private async processRecommendedVideoAsync(videoUrl: string, bvid: string, videoList: VideoData[]): Promise<void> {
+    try {
+      console.log(`🔄 开始异步解析推荐视频: ${bvid}`);
+      console.log(`🔗 视频URL: ${videoUrl}`);
+      
+      // 检查token
+      if (!this.userToken) {
+        console.error(`❌ Token不存在，无法解析视频 ${bvid}`);
+        return;
+      }
+      
+      // 调用/video/process接口进行视频解析
+      console.log(`🚀 调用/video/process接口解析视频: ${bvid}`);
+      const processResponse = await apiService.processVideo(this.userToken, videoUrl, 80, 'auto');
+      
+      if (processResponse && processResponse.playUrl) {
+        console.log(`✅ 视频解析成功: ${bvid}`);
+        console.log(`🔗 播放链接: ${processResponse.playUrl}`);
+        console.log(`📋 视频标题: ${processResponse.title}`);
+        console.log(`📁 文件路径: ${processResponse.filePath}`);
+        console.log(`🎬 质量描述: ${processResponse.qualityDesc}`);
+        
+        // 更新第一个视频（点击的推荐视频）的播放链接和信息
+        if (videoList.length > 0 && videoList[0].bvid === bvid) {
+          // 设置实际的播放链接
+          videoList[0].video = processResponse.playUrl;
+          // 更新视频标题（如果API返回了更准确的标题）
+          if (processResponse.title) {
+            videoList[0].description = processResponse.title;
+          }
+          
+          console.log(`🎯 已更新点击视频的播放链接: ${bvid}`);
+        }
+        
+        // 通知播放页面视频解析完成
+        AppStorage.setOrCreate('parsedVideoUpdate', {
+          bvid: bvid,
+          timestamp: Date.now(),
+          downloadUrl: processResponse.playUrl,
+          title: processResponse.title,
+          filePath: processResponse.filePath,
+          qualityDesc: processResponse.qualityDesc,
+          message: processResponse.message
+        });
+        
+        console.log(`🎉 推荐视频 ${bvid} 解析完成，已通知播放页面`);
+        
+      } else {
+        console.warn(`⚠️ 视频解析失败：API返回数据异常 ${bvid}`);
+        console.warn(`📋 API响应:`, processResponse);
+      }
+      
+    } catch (error) {
+      console.error(`❌ 异步解析视频失败: ${bvid}`, error);
+      
+      // 解析失败时的处理
+      if (videoList.length > 0 && videoList[0].bvid === bvid) {
+        console.log(`🔄 解析失败，视频将保持无播放链接状态，等待用户重试`);
+      }
+    }
+  }
+  
+  // 异步解析推荐视频 - 使用与Dynamic.ets相同的方法（保留原方法作为备用）
   private async parseRecommendedVideoAsync(bvid: string, videoList: VideoData[]): Promise<void> {
     try {
       console.log(`🔄 开始异步解析推荐视频: ${bvid}`);
