@@ -5,6 +5,8 @@ import http from '@ohos.net.http';
 import { promptAction, router } from '@kit.ArkUI';
 import { apiService } from '../api/ApiService';
 import { preferences } from '@kit.ArkData';
+import { tokenManager } from '../utils/TokenManager';
+import { common } from '@kit.AbilityKit';
 
 // 定义视频信息接口
 interface VideoInfo {
@@ -106,19 +108,31 @@ export struct Home {
     .borderRadius(12)
   }
 
+  private getUIAbilityContext(): common.UIAbilityContext {
+    return AppStorage.get('uiAbilityContext') as common.UIAbilityContext;
+  }
+
   async aboutToAppear() {
     await this.loadUserToken(); // 加载用户token
   }
 
   async loadUserToken() {
     try {
-      const dataPreferences = await preferences.getPreferences(getContext(), 'user_data');
-      const token = await dataPreferences.get('token', '') as string;
+      const context = this.getUIAbilityContext();
+      if (!context) {
+        console.error('无法获取UIAbilityContext');
+        await this.loadData();
+        return;
+      }
+      
+      const token = await tokenManager.getToken(context);
       if (token) {
         this.userToken = token;
+        console.log('成功获取用户token:', token.substring(0, 10) + '...');
         await this.loadBilibiliAuthInfo();
         await this.loadRecommendVideos();
       } else {
+        console.log('没有找到用户token，使用备用方式加载数据');
         // 如果没有token，使用原来的方式加载数据
         await this.loadData();
       }
