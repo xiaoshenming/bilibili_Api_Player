@@ -64,4 +64,3 @@ export interface BilibiliAccount {
   follower?: number; // 粉丝数
   sign?: string; // 签名
 }
-

@@ -190,6 +190,70 @@ class ApiService {
     });
   }
 
+  // 获取哔哩哔哩鉴权信息
+  getBilibiliAuthInfo(token: string): Promise<{
+    dedeuserid: string;
+    bili_jct: string;
+    cookie_string: string;
+    nickname: string;
+    avatar: string;
+    login_time: string;
+    expire_time: string | null;
+    cookies: {
+      DedeUserID: string;
+      bili_jct: string;
+      SESSDATA: string;
+      DedeUserID__ckMd5: string;
+    };
+  }> {
+    return this.request('/bilibili/auth-info', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      }
+    });
+  }
+
+  // 获取哔哩哔哩推荐视频列表
+  getBilibiliRecommendVideos(token: string, page: number = 1): Promise<{
+    videos: Array<{
+      bvid: string;
+      aid: number;
+      cid: number;
+      title: string;
+      pic: string;
+      desc: string;
+      duration: number;
+      pubdate: number;
+      owner: {
+        name: string;
+        face: string;
+        mid: number;
+      };
+      stat: {
+        view: number;
+        danmaku: number;
+        reply: number;
+        favorite: number;
+        coin: number;
+        share: number;
+        like: number;
+      };
+      tname: string;
+    }>;
+    has_more: boolean;
+  }> {
+    return this.request('/bilibili/recommend-videos', {
+      method: http.RequestMethod.GET,
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'devicetype': 'harmony'
+      },
+      extraData: `page=${page}`
+    });
+  }
+
   // 【新增】检查用户登录状态和Token有效性
   async checkStatus(token: string): Promise<{
     success: boolean;

@@ -156,7 +156,7 @@ export struct Dynamic {
                         top: { anchor: "__container__", align: VerticalAlign.Top },
                         left: { anchor: "__container__", align: HorizontalAlign.Start }
                       })
-                      .id("image1")
+                      .id("dynamic_image1")
 
 
                     Text(item.description)
