@@ -21,6 +21,8 @@ export interface VideoData {
   shares: string | number; // 转发
   reply?: string | number; // 评论数
   tname?: string; // 分区名称
+  preloaded_url?: string; // 预加载的视频链接
+  preloaded_audio?: string; // 预加载的音频链接
   controller: VideoController;
   auto: boolean;
   play: boolean;

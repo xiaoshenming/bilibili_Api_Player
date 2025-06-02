@@ -31,52 +31,7 @@ export struct VideoPlayer {
   private context = getContext(this) as common.UIAbilityContext;
 
   controller: webview.WebviewController = new webview.WebviewController();
-  videoDatas: Array<VideoData> = [
-    {
-      description: '总得来看看雪山吧', //标题
-      head: $r('app.media.photo35'), //封面URL
-      video:$rawfile('short_video2.mp4'),//视频链接
-      // video:$rawfile('aaaaaaaaaaa.mp4'),//视频链接
-      bvid:'BV1kpSmYTEoy',
-      name: '@登山爱好者', //UP主
-      face:'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
-      view: '114514', //播放量
-      total:'114514',
-      like:'1111',//点赞
-      barrage: '114514', //弹幕数
-      time: '511', //时长
-      pubdate:'5555',
-      coins: '5555',//投币
-      favorites: '5555',//收藏
-      shares: '5555',//转发
-      controller: this.myController,
-      auto:false,
-      play:false,
-      index: '0',
-    },
-    {
-      description: '总得来看看雪山吧', //标题
-      head: 'http://i2.hdslb.com/bfs/archive/c4603188a8d0caa468649820dbd5750612095236.jpg', //封面URL
-      // video:'http://10.23.55.31:7894/BV1m1sue8EQc.mp4',//视频链接
-      video:'http://10.23.55.31:7894/BV1scmfYPES3.mp4',//视频链接
-      bvid:'BV1xuSnYwEsr',
-      name: '画渣花小烙', //UP主
-      face:'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
-      view: '114514', //播放量
-      total:'114514',
-      like:'1111',//点赞
-      barrage: '114514', //弹幕数
-      time: '511', //时长
-      pubdate:'5555',
-      coins: '5555',//投币
-      favorites: '5555',//收藏
-      shares: '5555',//转发
-      controller: this.myController,
-      auto:false,
-      play:false,
-      index: '1',
-    },
-  ];
+  videoDatas: Array<VideoData> = [];
 
   async aboutToAppear() {
     try {
@@ -92,8 +47,8 @@ export struct VideoPlayer {
         params = {};
       }
       
-      // 立即加载本地默认视频，提供无缝体验
-      console.info('立即加载本地视频以提供无缝体验...');
+      // 初始化视频数据源
+      console.info('初始化视频数据源...');
       this.loadDefaultVideos();
       
       // 检查是否来自解析页面
@@ -280,35 +235,35 @@ export struct VideoPlayer {
     }
   }
 
-  // 加载默认视频
+  // 加载默认视频数据
   private loadDefaultVideos() {
     try {
-      console.info('开始加载默认视频数据');
-      // 把默认视频数据加载进datas对象中
-      if (this.videoDatas && Array.isArray(this.videoDatas)) {
-        for (let index = 0; index < this.videoDatas.length; index++) {
-          if (this.videoDatas[index]) {
-            this.datas.pushData(this.videoDatas[index]);
-          }
-        }
-        console.info(`成功加载${this.videoDatas.length}个默认视频`);
-      } else {
-        console.error('默认视频数据不存在或格式错误');
-      }
+      console.info('初始化视频数据源...');
+      
+      // 清空现有数据
+      this.datas.clearData();
+      
+      console.info('视频数据源初始化完成');
     } catch (error) {
-      console.error('加载默认视频失败:', error);
-      console.error('默认视频加载错误详情:', JSON.stringify(error));
+      console.error('初始化视频数据源失败:', error);
     }
   }
 
-  // 处理视频滑动事件，实现动态预加载
+  // 处理视频滑动事件，实现动态预加载和鉴权
   private async handleVideoSwipe(currentIndex: number) {
     try {
-      console.info(`用户滑动到第${currentIndex}个视频，开始预加载机制`);
+      console.info(`用户滑动到第${currentIndex}个视频，开始处理视频切换`);
       
       // 获取当前视频总数
       const totalVideos = this.datas.totalCount();
       console.info(`当前视频总数: ${totalVideos}`);
+      
+      // 获取当前视频数据
+      const currentVideo = this.datas.getData(currentIndex);
+      if (currentVideo) {
+        // 检查当前视频是否需要鉴权获取播放链接
+        await this.ensureVideoPlayable(currentVideo, currentIndex);
+      }
       
       // 预加载策略：当用户滑动到倒数第3个视频时，开始预加载更多视频
       if (currentIndex >= totalVideos - 3) {
@@ -395,8 +350,8 @@ export struct VideoPlayer {
           const videoData: VideoData = {
             description: videoInfo.title,
             head: videoInfo.pic || $r('app.media.photo35'),
-            video: videoInfo.download_link || '',
-            audioUrl: '',
+            video: videoInfo.preloaded_url || videoInfo.download_link || '',
+            audioUrl: videoInfo.preloaded_audio || '',
             bvid: videoInfo.bvid,
             aid: String(videoInfo.id),
             cid: '0',
@@ -419,10 +374,20 @@ export struct VideoPlayer {
             total: String(videoInfo.current_viewers)
           };
           
+          // 将预加载信息存储到videoData中，供后续使用
+          videoData.preloaded_url = videoInfo.preloaded_url;
+          videoData.preloaded_audio = videoInfo.preloaded_audio;
+          
           this.datas.pushData(videoData);
         }
         
         console.info('新视频已添加到列表，预加载完成');
+        
+        // 确保第一个视频可以播放
+        if (this.datas.totalCount() > 0) {
+          const firstVideo = this.datas.getData(0);
+          await this.ensureVideoPlayable(firstVideo, 0);
+        }
       }
       
     } catch (error) {
@@ -469,6 +434,65 @@ export struct VideoPlayer {
     }
   }
 
+  // 确保视频可播放（动态鉴权）
+  private async ensureVideoPlayable(video: VideoData, index: number) {
+    try {
+      console.info(`检查视频${index}(${video.bvid})的播放状态`);
+      
+      // 检查是否有预加载的链接
+      if (video.preloaded_url && video.preloaded_url.startsWith('http')) {
+        console.info(`使用预加载的播放链接: ${video.bvid}`);
+        video.video = video.preloaded_url;
+        if (video.preloaded_audio) {
+          video.audioUrl = video.preloaded_audio;
+        }
+        // 更新数据源
+        this.datas.updateDataAtIndex(index, video);
+        return;
+      }
+      
+      // 检查视频是否已经有有效的播放链接（不是download_link）
+      if (video.video && typeof video.video === 'string' && video.video.startsWith('http') && 
+          !video.video.includes('/api/video/download/') && 
+          !video.video.includes('download_link')) {
+        console.info(`视频${index}已有有效播放链接，无需重新获取`);
+        return;
+      }
+      
+      // 如果没有有效播放链接，动态获取
+      if (video.bvid && this.context) {
+        console.info(`开始为视频${video.bvid}获取播放链接`);
+        
+        const token = await tokenManager.getToken(this.context);
+        if (!token) {
+          console.error('用户未登录，无法获取播放链接');
+          return;
+        }
+        
+        const videoUrl = `https://www.bilibili.com/video/${video.bvid}`;
+        const result = await apiService.parseVideo(token, videoUrl);
+        
+        if (result && result.play_info) {
+          console.info(`成功获取视频${video.bvid}的播放链接`);
+          video.video = result.play_info.video_url || '';
+          video.audioUrl = result.play_info.audio_url || '';
+          
+          // 存储到预加载信息中
+          video.preloaded_url = video.video as string;
+          video.preloaded_audio = video.audioUrl;
+          
+          // 更新数据源中的视频数据
+          this.datas.updateDataAtIndex(index, video);
+          console.info(`视频${video.bvid}播放链接更新完成`);
+        } else {
+          console.error(`获取视频${video.bvid}播放链接失败`);
+        }
+      }
+    } catch (error) {
+      console.error(`确保视频${video.bvid}可播放时出错:`, error);
+    }
+  }
+  
   // 更新当前观看人数
   private updateCurrentViewers(index: number) {
     try {
@@ -642,7 +666,10 @@ export struct VideoPlayer {
           videoIndex = index;
           
           // 动态预加载机制：当用户滑动到某个视频时，预加载后续视频
-          await this.handleVideoSwipe(index);
+          // 使用异步处理，避免阻塞UI
+          this.handleVideoSwipe(index).catch((error: Error) => {
+            console.error('处理视频切换失败:', error);
+          });
         })
       }
       .width('100%')
