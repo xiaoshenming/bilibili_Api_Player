@@ -855,7 +855,7 @@ export struct Home {
                           // 找到点击的视频在历史列表中的索引
                           const clickedHistoryIndex = allHistoryVideoData.findIndex(video => video.bvid === item.bvid);
                           
-                          let finalVideos: VideoData[];
+                          let finalVideos: VideoData[] = [];
                           let startIndex = 0;
                           
                           if (clickedHistoryIndex >= 0) {
@@ -882,54 +882,100 @@ export struct Home {
                             // 点击的是推荐视频，需要解析并插入到历史列表
                             console.log('🆕 点击的是推荐视频，将其插入到历史列表开头');
                             
-                            // 创建点击视频的VideoData
-                            const clickedVideoData: VideoData = {
-                              description: item.description,
-                              head: item.head || '',
-                              video: '', // 暂时为空，需要解析
-                              audioUrl: '',
-                              bvid: item.bvid,
-                              aid: item.aid || '',
-                              cid: item.cid || '',
-                              name: item.name,
-                              face: item.face,
-                              view: String(item.view),
-                              total: item.total || '0',
-                              like: item.like || '0',
-                              barrage: String(item.barrage || 0),
-                              time: String(item.time || 0),
-                              pubdate: item.pubdate || '0',
-                              coins: item.coins || '0',
-                              favorites: item.favorites || '0',
-                              shares: item.shares || '0',
-                              reply: item.reply || '0',
-                              tname: item.tname || '推荐',
-                              controller: this.myController,
-                              auto: true,
-                              play: true,
-                              index: '0'
-                            };
-                            
-                            // 将点击的视频放在第一位，后面跟历史视频
-                            finalVideos = [clickedVideoData, ...allHistoryVideoData];
-                            startIndex = 0;
-                            
-                            // 历史模式：异步解析推荐视频，不等待解析完成就跳转
-                            console.log(`🎯 历史模式：开始异步解析推荐视频: ${item.bvid}`);
-                            
-                            // 构造视频URL用于解析
-                            const videoUrl = `https://www.bilibili.com/video/${item.bvid}`;
-                            
-                            // 异步调用视频解析接口，不等待完成
-                            this.processRecommendedVideoAsync(videoUrl, item.bvid, finalVideos).catch((error: Error) => {
-                              console.error(`❌ 异步解析视频失败: ${item.bvid}`, error);
-                            });
-                            
-                            console.log(`🚀 推荐视频 ${item.bvid} 解析任务已提交，用户可以观看历史视频等待解析完成`);
-                            
-                            // 预加载其他历史视频的播放链接（异步进行，不阻塞跳转）
-                            console.log('🚀 开始预加载其他历史视频的播放链接...');
-                            this.preloadHistoryVideos(finalVideos.slice(1, 6)); // 异步预加载第2-6个视频
+                            // 先解析视频获取详细信息
+                            try {
+                              console.log(`🔄 开始解析视频: ${item.bvid}`);
+                              
+                              if (!this.userToken) {
+                                console.error('❌ Token不存在，无法解析视频');
+                                promptAction.showToast({ message: '请先登录' });
+                                return;
+                              }
+                              
+                              // 构造视频URL用于解析
+                              const videoUrl = `https://www.bilibili.com/video/${item.bvid}`;
+                              
+                              // 调用parseVideo API获取视频详情
+                              console.log(`🚀 调用parseVideo API解析视频: ${item.bvid}`);
+                              const parseResult = await apiService.parseVideoDetails(this.userToken, videoUrl);
+                              
+                              if (parseResult) {
+                                console.log(`✅ 视频解析成功: ${item.bvid}`);
+                                console.log(`🔗 视频链接: ${parseResult.videoUrl}`);
+                                console.log(`🔗 音频链接: ${parseResult.audioUrl}`);
+                                console.log(`📋 视频标题: ${parseResult.title}`);
+                                
+                                // 创建点击视频的VideoData，使用解析结果填充
+                                const clickedVideoData: VideoData = {
+                                  description: parseResult.title || item.description,
+                                  head: item.head || '',
+                                  video: parseResult.videoUrl, // 使用解析得到的视频链接
+                                  audioUrl: parseResult.audioUrl,
+                                  bvid: parseResult.bvid || item.bvid,
+                                  aid: parseResult.aid || item.aid || '',
+                                  cid: parseResult.cid || item.cid || '',
+                                  name: parseResult.name || item.name,
+                                  face: parseResult.face || item.face,
+                                  view: String(parseResult.view || item.view),
+                                  total: item.total || '0',
+                                  like: String(parseResult.like || item.like || '0'),
+                                  barrage: String(parseResult.danmaku || item.barrage || 0),
+                                  time: String(parseResult.duration || item.time || 0),
+                                  pubdate: String(parseResult.pubdate || item.pubdate || '0'),
+                                  coins: String(parseResult.coin || item.coins || '0'),
+                                  favorites: String(parseResult.favorite || item.favorites || '0'),
+                                  shares: String(parseResult.share || item.shares || '0'),
+                                  reply: String(parseResult.reply || item.reply || '0'),
+                                  tname: parseResult.tname || item.tname || '推荐',
+                                  controller: this.myController,
+                                  auto: true,
+                                  play: true,
+                                  index: '0'
+                                };
+                                
+                                // 将点击的视频放在第一位，后面跟历史视频
+                                finalVideos = [clickedVideoData, ...allHistoryVideoData];
+                                startIndex = 0;
+
+                                // 历史模式：异步解析推荐视频，不等待解析完成就跳转
+                                console.log(`🎯 历史模式：开始异步解析推荐视频: ${item.bvid}`);
+
+                                // 构造视频URL用于解析
+                                const videoUrl = `https://www.bilibili.com/video/${item.bvid}`;
+
+                                // 异步调用视频解析接口，不等待完成
+                                this.processRecommendedVideoAsync(videoUrl, item.bvid, finalVideos).catch((error: Error) => {
+                                  console.error(`❌ 异步解析视频失败: ${item.bvid}`, error);
+                                });
+
+                                console.log(`🚀 推荐视频 ${item.bvid} 解析任务已提交，用户可以观看历史视频等待解析完成`);
+
+                                // 预加载其他历史视频的播放链接（异步进行，不阻塞跳转）
+                                console.log('🚀 开始预加载其他历史视频的播放链接...');
+                                this.preloadHistoryVideos(finalVideos.slice(1, 6)); // 异步预加载第2-6个视频
+
+                                // 跳转到视频播放页面，传递与Dynamic.ets完全相同的参数
+                                console.log(`🚀 跳转到视频播放页面，第一个视频: ${finalVideos[0].bvid}`);
+                                router.pushUrl({
+                                  url: "pages/VideoPlayer",
+                                  params: {
+                                    videoDatas: finalVideos,
+                                    bvidflag: item.bvid,
+                                    startIndex: 0, // 从重排后的第一个开始播放
+                                    userToken: this.userToken, // 传递用户token
+                                    preloadedCount: 1, // 已预加载的视频数量（第一个视频）
+                                    enableSmartPreload: true, // 启用智能预加载
+                                    preloadRange: 5 // 预加载范围（当前视频前后5个）
+                                  }
+                                });
+                              } else {
+                                console.error(`❌ 视频解析失败: ${item.bvid}`);
+                                promptAction.showToast({ message: '视频解析失败，请重试' });
+                              }
+                            } catch (error) {
+                              console.error(`❌ 解析视频时发生错误: ${item.bvid}`, error);
+                              promptAction.showToast({ message: `解析视频失败: ${error.message}` });
+                            }
                           }
                           
                           // 最终验证第一个视频的播放链接（历史模式下推荐视频可能正在异步解析）
