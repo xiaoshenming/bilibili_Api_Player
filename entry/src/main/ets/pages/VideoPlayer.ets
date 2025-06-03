@@ -106,6 +106,14 @@ export struct VideoPlayer {
           if (this.datas.totalCount() > startIndex) {
             const currentVideo = this.datas.getData(startIndex);
             await this.ensureVideoPlayable(currentVideo, startIndex);
+            
+            // 设置自动播放标志
+            currentVideo.auto = true;
+            currentVideo.play = true;
+            this.datas.updateDataAtIndex(startIndex, currentVideo);
+            
+            // 强制刷新UI
+            this.parsedVideoUpdateFlag++;
           }
           
           // 智能预加载相邻视频以实现连续播放
@@ -561,6 +569,46 @@ export struct VideoPlayer {
       return item.video;
     }
     
+    // 如果没有有效链接，尝试立即获取（异步）
+    if (item.bvid && this.userToken) {
+      console.log(`⚠️ 没有有效链接，尝试立即获取: ${item.bvid}`);
+      
+      // 异步获取，不阻塞UI渲染
+      setTimeout(async () => {
+        try {
+          const fileName = `${item.bvid}.mp4`;
+          const response = await apiService.generateDownloadLink(this.userToken!, fileName);
+          
+          if (response && response.downloadUrl) {
+            // 更新视频数据
+            item.video = response.downloadUrl;
+            item.preloaded_url = response.downloadUrl;
+            
+            // 强制刷新UI
+            this.parsedVideoUpdateFlag++;
+            console.log(`✅ 成功获取播放链接: ${response.downloadUrl}`);
+            
+            // 如果是当前视频，尝试立即播放
+            const currentIndex = this.index;
+            const videoData = this.datas.getData(currentIndex);
+            if (videoData && videoData.bvid === item.bvid && 
+                videoData.controller && typeof videoData.controller.start === 'function') {
+              setTimeout(() => {
+                try {
+                  console.log(`▶️ 获取链接后立即播放视频 ${item.bvid}`);
+                  videoData.controller.start();
+                } catch (playError) {
+                  console.error(`❌ 获取链接后播放视频失败:`, playError);
+                }
+              }, 300);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ 立即获取播放链接失败:`, error);
+        }
+      }, 0);
+    }
+    
     // 返回原始值
     console.log(`✅ 使用原始值: ${item.video}`);
     return item.video;
@@ -679,6 +727,13 @@ export struct VideoPlayer {
           console.log(`🔗 旧链接: ${oldUrl}`);
           console.log(`🔗 新链接: ${result.downloadUrl}`);
           
+          // 设置自动播放标志
+          if (index === this.index) {
+            video.auto = true;
+            video.play = true;
+            console.log(`🎬 设置当前视频 ${video.bvid} 为自动播放`);
+          }
+          
           // 更新数据源
           this.datas.updateDataAtIndex(index, video);
           
@@ -686,6 +741,18 @@ export struct VideoPlayer {
           if (oldUrl !== result.downloadUrl) {
             this.parsedVideoUpdateFlag++;
             console.log(`🔄 视频链接已更新，强制刷新UI`);
+          }
+          
+          // 如果是当前视频，立即尝试播放
+          if (index === this.index && video.controller && typeof video.controller.start === 'function') {
+            setTimeout(() => {
+              try {
+                console.log(`▶️ 尝试立即播放视频 ${video.bvid}`);
+                video.controller.start();
+              } catch (playError) {
+                console.error(`❌ 立即播放视频失败:`, playError);
+              }
+            }, 500); // 延迟500毫秒确保UI已更新
           }
         } else {
           console.error(`❌ 视频 ${video.bvid} 动态鉴权失败`);
@@ -781,6 +848,8 @@ export struct VideoPlayer {
     const currentData = this.datas.getData(this.index);
     if (currentData && currentData.controller && typeof currentData.controller.start === 'function') {
       currentData.controller.start();
+      currentData.play = true;
+      this.playBoo = true;
     }
   }
   
@@ -814,7 +883,7 @@ export struct VideoPlayer {
                     .height(Const.FULL_SIZE)
                     .objectFit(ImageFit.Contain)
                     .loop(true)
-                    .autoPlay(item.auto)
+                    .autoPlay(index === this.index) // 确保当前视频自动播放
                     .controls(true) // 启用控制条以便调试
                     .muted(false) // 确保音频未静音
                     .opacity(1.0) // 确保视频可见
@@ -825,6 +894,7 @@ export struct VideoPlayer {
                       if (currentData) {
                         this.playBoo = currentData.play;
                       }
+                      console.log(`▶️ 视频 ${item.bvid} 开始播放`);
                     })
                     .onPause(() => {
                       item.play = false;
@@ -832,6 +902,7 @@ export struct VideoPlayer {
                       if (currentData) {
                         this.playBoo = currentData.play;
                       }
+                      console.log(`⏸️ 视频 ${item.bvid} 暂停播放`);
                     })
                     .onClick(() => {
                       if (item && item.controller) {
@@ -963,6 +1034,10 @@ export struct VideoPlayer {
           if (currentVideo) {
             console.log(`🎯 当前视频: ${currentVideo.bvid}`);
             
+            // 设置自动播放标志
+            currentVideo.auto = true;
+            currentVideo.play = true;
+            
             // 确保当前视频可播放
             await this.ensureVideoPlayable(currentVideo, index);
             
@@ -971,6 +1046,18 @@ export struct VideoPlayer {
             if (!videoSource || videoSource === '') {
               console.log(`⚠️ 视频源为空，尝试强制刷新: ${currentVideo.bvid}`);
               await this.ensureVideoPlayable(currentVideo, index, true);
+            }
+            
+            // 立即尝试播放视频
+            if (currentVideo.controller && typeof currentVideo.controller.start === 'function') {
+              setTimeout(() => {
+                try {
+                  console.log(`▶️ 滑动切换后立即播放视频 ${currentVideo.bvid}`);
+                  currentVideo.controller.start();
+                } catch (playError) {
+                  console.error(`❌ 滑动切换后播放视频失败:`, playError);
+                }
+              }, 300);
             }
           }
           
