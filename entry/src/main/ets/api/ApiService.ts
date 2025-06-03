@@ -4,7 +4,7 @@ import { http } from '@kit.NetworkKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
 // 【重要】请务必将此IP和端口替换为您后端服务器的实际地址
-const BASE_URL = 'http://10.23.55.31:11111/api';
+const BASE_URL = 'http://10.3.36.15:11111/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options: http.HttpRequestOptions): Promise<T> {

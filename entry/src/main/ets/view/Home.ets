@@ -954,20 +954,20 @@ export struct Home {
                                 console.log('🚀 开始预加载其他历史视频的播放链接...');
                                 this.preloadHistoryVideos(finalVideos.slice(1, 6)); // 异步预加载第2-6个视频
 
-                                // 跳转到视频播放页面，传递与Dynamic.ets完全相同的参数
-                                console.log(`🚀 跳转到视频播放页面，第一个视频: ${finalVideos[0].bvid}`);
-                                router.pushUrl({
-                                  url: "pages/VideoPlayer",
-                                  params: {
-                                    videoDatas: finalVideos,
-                                    bvidflag: item.bvid,
-                                    startIndex: 0, // 从重排后的第一个开始播放
-                                    userToken: this.userToken, // 传递用户token
-                                    preloadedCount: 1, // 已预加载的视频数量（第一个视频）
-                                    enableSmartPreload: true, // 启用智能预加载
-                                    preloadRange: 5 // 预加载范围（当前视频前后5个）
-                                  }
-                                });
+                                // // 跳转到视频播放页面，传递与Dynamic.ets完全相同的参数
+                                // console.log(`🚀 跳转到视频播放页面，第一个视频: ${finalVideos[0].bvid}`);
+                                // router.pushUrl({
+                                //   url: "pages/VideoPlayer",
+                                //   params: {
+                                //     videoDatas: finalVideos,
+                                //     bvidflag: item.bvid,
+                                //     startIndex: 0, // 从重排后的第一个开始播放
+                                //     userToken: this.userToken, // 传递用户token
+                                //     preloadedCount: 1, // 已预加载的视频数量（第一个视频）
+                                //     enableSmartPreload: true, // 启用智能预加载
+                                //     preloadRange: 5 // 预加载范围（当前视频前后5个）
+                                //   }
+                                // });
                               } else {
                                 console.error(`❌ 视频解析失败: ${item.bvid}`);
                                 promptAction.showToast({ message: '视频解析失败，请重试' });
