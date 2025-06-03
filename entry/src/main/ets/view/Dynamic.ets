@@ -293,8 +293,7 @@ export struct Dynamic {
 
   // 视频点击处理 - 智能预加载和无缝播放
   private async onVideoClick(clickedVideo: VideoData, clickedIndex: number) {
-    console.log(`🎯 点击视频: ${clickedVideo.description}`);
-    
+    console.log(`🎯 点击视频: ${clickedVideo.description}`);    
     try {
       // 显示加载状态
       this.isLoading = true;
@@ -322,6 +321,21 @@ export struct Dynamic {
       // 优先为点击的视频获取播放链接
       console.log(`🎯 优先为点击视频获取播放链接: ${clickedVideo.bvid}`);
       await this.preloadSingleVideo(reorderedVideos[0], 0);
+      
+      // 确保第一个视频有有效的播放链接
+      if (!reorderedVideos[0].video || typeof reorderedVideos[0].video !== 'string' || !reorderedVideos[0].video.startsWith('http')) {
+        console.log(`⚠️ 第一个视频没有获取到有效播放链接，尝试重新获取`);
+        const fileName = `${reorderedVideos[0].bvid}.mp4`;
+        const response = await apiService.generateDownloadLink(this.userToken, fileName);
+        
+        if (response && response.downloadUrl) {
+          reorderedVideos[0].video = response.downloadUrl;
+          reorderedVideos[0].preloaded_url = response.downloadUrl;
+          console.log(`✅ 成功获取播放链接: ${response.downloadUrl}`);
+        } else {
+          console.error(`❌ 无法获取播放链接`);
+        }
+      }
       
       // 智能预加载策略：预加载前10个视频的播放链接
       console.log(`🚀 开始智能预加载，目标视频索引: ${startIndex}`);
@@ -440,6 +454,7 @@ export struct Dynamic {
       if (response && response.downloadUrl) {
         // 将获取到的播放链接存储到视频数据中
         video.video = response.downloadUrl;
+        video.preloaded_url = response.downloadUrl;
         
         // 标记为已预加载
         this.preloadedVideos.add(video.bvid);
@@ -463,9 +478,60 @@ export struct Dynamic {
     }
   }
   
-  // 预加载视频链接并进行鉴权（保留原方法以兼容）
-  private async preloadVideoLinksWithAuth(videos: Array<VideoData>): Promise<void> {
-    await this.smartPreloadVideos(videos, 0, videos.length);
+  // 预加载视频链接（带鉴权）
+  private async preloadVideoLinksWithAuth(videos: VideoData[]): Promise<void> {
+    if (!videos || videos.length === 0) {
+      console.log('没有视频需要预加载');
+      return;
+    }
+    
+    console.log(`开始预加载${videos.length}个视频的播放链接`);
+    
+    // 确保有有效的token
+    if (!this.userToken) {
+      await this.loadUserToken();
+      if (!this.userToken) {
+        console.error('无法获取用户token，预加载失败');
+        return;
+      }
+    }
+    
+    // 并行预加载所有视频
+    const preloadPromises = videos.map(async (video, index) => {
+      try {
+        // 检查是否已经有有效的播放链接
+        if (video.video && typeof video.video === 'string' && video.video.startsWith('http')) {
+          console.log(`视频 ${video.bvid} 已有播放链接，跳过预加载`);
+          return;
+        }
+        
+        console.log(`预加载视频 ${index}: ${video.description} (${video.bvid})`);
+        
+        // 使用generate-download-link API获取真正可播放的链接
+        const fileName = `${video.bvid}.mp4`;
+        const response = await apiService.generateDownloadLink(this.userToken, fileName);
+        
+        if (response && response.downloadUrl) {
+          // 将获取到的播放链接存储到视频数据中
+          video.video = response.downloadUrl;
+          video.preloaded_url = response.downloadUrl;
+          
+          // 标记为已预加载
+          this.preloadedVideos.add(video.bvid);
+          
+          console.log(`视频 ${video.bvid} 预加载成功，播放链接: ${response.downloadUrl}`);
+        } else {
+          console.warn(`视频 ${video.bvid} 预加载失败：API返回数据异常`);
+        }
+      } catch (error) {
+        console.error(`视频 ${video.bvid} 预加载失败:`, error);
+        // 预加载失败不影响整体流程，继续处理其他视频
+      }
+    });
+    
+    // 等待所有预加载完成
+    await Promise.allSettled(preloadPromises);
+    console.log(`${videos.length}个视频预加载完成`);
   }
 
   // 刷新视频列表
