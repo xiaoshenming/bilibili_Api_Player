@@ -686,8 +686,23 @@ export struct VideoPlayer {
         if (video.preloaded_audio) {
           video.audioUrl = video.preloaded_audio;
         }
+        // 设置自动播放标志
+        video.auto = true;
+        video.play = true;
         // 更新数据源
         this.datas.updateDataAtIndex(index, video);
+        
+        // 如果是当前视频，延迟触发播放
+        if (index === this.index && video.controller && typeof video.controller.start === 'function') {
+          setTimeout(() => {
+            try {
+              console.log(`▶️ 预加载视频立即播放: ${video.bvid}`);
+              video.controller.start();
+            } catch (playError) {
+              console.error(`❌ 预加载视频播放失败:`, playError);
+            }
+          }, 500);
+        }
         return;
       }
       
@@ -697,6 +712,10 @@ export struct VideoPlayer {
       if (!forceRefresh && video.video && typeof video.video === 'string' && video.video.startsWith('http') && 
           !video.video.includes('/api/video/download/') && 
           !video.video.includes('download_link')) {
+        // 设置自动播放标志
+        video.auto = true;
+        video.play = true;
+        this.datas.updateDataAtIndex(index, video);
         return;
       }
       
@@ -727,12 +746,10 @@ export struct VideoPlayer {
           console.log(`🔗 旧链接: ${oldUrl}`);
           console.log(`🔗 新链接: ${result.downloadUrl}`);
           
-          // 设置自动播放标志
-          if (index === this.index) {
-            video.auto = true;
-            video.play = true;
-            console.log(`🎬 设置当前视频 ${video.bvid} 为自动播放`);
-          }
+          // 设置自动播放标志（无论是否为当前视频）
+          video.auto = true;
+          video.play = true;
+          console.log(`🎬 设置视频 ${video.bvid} 为自动播放`);
           
           // 更新数据源
           this.datas.updateDataAtIndex(index, video);
@@ -743,17 +760,17 @@ export struct VideoPlayer {
             console.log(`🔄 视频链接已更新，强制刷新UI`);
           }
           
-          // 如果是当前视频，立即尝试播放
-          if (index === this.index && video.controller && typeof video.controller.start === 'function') {
-            setTimeout(() => {
-              try {
-                console.log(`▶️ 尝试立即播放视频 ${video.bvid}`);
+          // 延迟尝试播放（给UI更新时间）
+          setTimeout(() => {
+            try {
+              console.log(`▶️ 尝试立即播放视频 ${video.bvid}`);
+              if (video.controller && typeof video.controller.start === 'function') {
                 video.controller.start();
-              } catch (playError) {
-                console.error(`❌ 立即播放视频失败:`, playError);
               }
-            }, 500); // 延迟500毫秒确保UI已更新
-          }
+            } catch (playError) {
+              console.error(`❌ 立即播放视频失败:`, playError);
+            }
+          }, 500); // 延迟500毫秒确保UI已更新
         } else {
           console.error(`❌ 视频 ${video.bvid} 动态鉴权失败`);
         }
