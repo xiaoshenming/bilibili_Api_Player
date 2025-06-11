@@ -5,6 +5,7 @@ import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { tokenManager } from '../utils/TokenManager';
 import { apiService } from '../api/ApiService';
+import { preferences } from '@kit.ArkData';
 
 // 用户信息接口
 interface UserInfo {
@@ -14,6 +15,13 @@ interface UserInfo {
   coins: number;
   followers: number;
   following: number;
+}
+
+// B站鉴权信息接口
+interface BilibiliAuthInfo {
+  nickname: string;
+  avatar: string;
+  dedeuserid: string;
 }
 
 // 统计数据接口
@@ -35,6 +43,9 @@ interface MenuItem {
 @Component
 export struct Mine {
   @State isLoggingOut: boolean = false; // 添加状态，防止重复点击
+  @State isLoading: boolean = true; // 数据加载状态
+  @State userToken: string = ''; // 用户token
+  @State bilibiliAuthInfo: BilibiliAuthInfo | null = null; // B站鉴权信息
   @State userInfo: UserInfo = {
     nickname: 'B站用户',
     avatar: 'https://i0.hdslb.com/bfs/face/84f1e4b0dd26cc45bb268275e68747cf9e8ba334.jpg',
@@ -43,6 +54,12 @@ export struct Mine {
     followers: 567,
     following: 89
   };
+  @State realUserStats: StatsItem[] = [
+    { title: '观看历史', value: '0', icon: '📺', color: '#FF6B9D' },
+    { title: '收藏夹', value: '0', icon: '⭐', color: '#4ECDC4' },
+    { title: '点赞数', value: '0', icon: '👍', color: '#45B7D1' },
+    { title: '投币数', value: '0', icon: '🪙', color: '#FFEAA7' }
+  ];
   @State statsData: Array<StatsItem> = [
     { title: '观看历史', value: '128', icon: '📺', color: '#FF6B9D' },
     { title: '收藏夹', value: '45', icon: '⭐', color: '#4ECDC4' },
@@ -65,6 +82,94 @@ export struct Mine {
   // 获取 UIAbility 上下文
   private getUIAbilityContext(): common.UIAbilityContext {
     return AppStorage.get('uiAbilityContext') as common.UIAbilityContext;
+  }
+
+  // 组件即将出现时调用
+  async aboutToAppear() {
+    await this.loadUserData();
+  }
+
+  // 加载用户数据
+  async loadUserData(): Promise<void> {
+    try {
+      this.isLoading = true;
+      const context = this.getUIAbilityContext();
+      
+      // 获取用户token
+      this.userToken = await tokenManager.getToken(context) || '';
+      
+      if (this.userToken) {
+        // 获取B站鉴权信息
+        await this.loadBilibiliAuthInfo();
+        // 获取用户统计数据
+        await this.loadUserStats();
+      }
+    } catch (error) {
+      console.error('❌ 加载用户数据失败:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // 获取B站鉴权信息
+  async loadBilibiliAuthInfo(): Promise<void> {
+    try {
+      if (!this.userToken) {
+        console.warn('⚠️ 用户token为空，无法获取哔哩哔哩鉴权信息');
+        return;
+      }
+
+      console.log('🔄 开始获取哔哩哔哩鉴权信息...');
+      const authInfo = await apiService.getBilibiliAuthInfo(this.userToken);
+      
+      if (authInfo && authInfo.cookies && authInfo.cookies.SESSDATA) {
+        this.bilibiliAuthInfo = {
+          nickname: authInfo.nickname || '未知用户',
+          avatar: authInfo.avatar || '',
+          dedeuserid: authInfo.dedeuserid || ''
+        };
+        
+        // 更新用户信息
+        this.userInfo = {
+          nickname: authInfo.nickname || 'B站用户',
+          avatar: authInfo.avatar || this.userInfo.avatar,
+          level: this.userInfo.level,
+          coins: this.userInfo.coins,
+          followers: this.userInfo.followers,
+          following: this.userInfo.following
+        };
+        
+        console.log('✅ 获取哔哩哔哩鉴权信息成功');
+      }
+    } catch (error) {
+      console.error('❌ 获取哔哩哔哩鉴权信息失败:', error);
+    }
+  }
+
+  // 获取用户统计数据
+  async loadUserStats(): Promise<void> {
+    try {
+      // 这里可以调用API获取真实的用户统计数据
+      // 暂时使用模拟数据，可以根据实际API进行调整
+      const historyCount = Math.floor(Math.random() * 500) + 100;
+      const favoritesCount = Math.floor(Math.random() * 100) + 20;
+      const likesCount = Math.floor(Math.random() * 1000) + 200;
+      const coinsCount = Math.floor(Math.random() * 500) + 50;
+      
+      this.realUserStats = [
+        { title: '观看历史', value: historyCount.toString(), icon: '📺', color: '#FF6B9D' },
+        { title: '收藏夹', value: favoritesCount.toString(), icon: '⭐', color: '#4ECDC4' },
+        { title: '点赞数', value: likesCount.toString(), icon: '👍', color: '#45B7D1' },
+        { title: '投币数', value: coinsCount.toString(), icon: '🪙', color: '#FFEAA7' }
+      ];
+      
+      // 更新硬币数量
+      this.userInfo.coins = coinsCount;
+      
+      console.log('✅ 用户统计数据加载完成');
+    } catch (error) {
+      console.error('❌ 获取用户统计数据失败:', error);
+    }
   }
 
   // 处理退出登录的函数
@@ -174,12 +279,22 @@ export struct Mine {
     Row({ space: 16 }) {
       // 头像
       Stack() {
-        Image(this.userInfo.avatar)
-          .width(80)
-          .height(80)
-          .borderRadius(40)
-          .objectFit(ImageFit.Cover)
-          .alt($r('app.media.photo35'))
+        if (this.isLoading) {
+          // 加载状态的占位符
+          Column()
+            .width(80)
+            .height(80)
+            .borderRadius(40)
+            .backgroundColor('#F0F0F0')
+            .animation({ duration: 1000, iterations: -1 })
+        } else {
+          Image(this.bilibiliAuthInfo?.avatar || this.userInfo.avatar)
+            .width(80)
+            .height(80)
+            .borderRadius(40)
+            .objectFit(ImageFit.Cover)
+            .alt($r('app.media.photo35'))
+        }
         
         // 等级标识
         Text(`LV${this.userInfo.level}`)
@@ -189,18 +304,40 @@ export struct Mine {
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
           .borderRadius(8)
           .position({ x: 55, y: 60 })
+          .opacity(this.isLoading ? 0.5 : 1)
       }
       
       // 用户信息
       Column({ space: 8 }) {
-        Text(this.userInfo.nickname)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+        if (this.isLoading) {
+          // 加载状态
+          Column()
+            .width(120)
+            .height(20)
+            .backgroundColor('#F0F0F0')
+            .borderRadius(4)
+        } else {
+          Text(this.bilibiliAuthInfo?.nickname || this.userInfo.nickname)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        
+        if (this.bilibiliAuthInfo?.dedeuserid && !this.isLoading) {
+          Text(`UID: ${this.bilibiliAuthInfo.dedeuserid}`)
+            .fontSize(12)
+            .fontColor('#666666')
+        }
+        
+        Text(this.isLoading ? '加载中...' : '哔哩哔哩用户')
+          .fontSize(14)
+          .fontColor('#999999')
         
         Row({ space: 16 }) {
           Column({ space: 2 }) {
-            Text(this.userInfo.coins.toString())
+            Text(this.isLoading ? '--' : this.userInfo.coins.toString())
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .fontColor('#FF6B9D')
@@ -210,7 +347,7 @@ export struct Mine {
           }
           
           Column({ space: 2 }) {
-            Text(this.userInfo.followers.toString())
+            Text(this.isLoading ? '--' : this.userInfo.followers.toString())
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .fontColor('#4ECDC4')
@@ -260,24 +397,51 @@ export struct Mine {
         
         Blank()
         
-        Text('查看详情 >')
-          .fontSize(14)
-          .fontColor('#FF6B9D')
+        Row({ space: 8 }) {
+          if (this.isLoading) {
+            Text('🔄')
+              .fontSize(16)
+              .fontColor('#FF6B9D')
+              .animation({ duration: 1000, iterations: -1, curve: Curve.Linear })
+              .rotate({ angle: this.isLoading ? 360 : 0 })
+          } else {
+            Text('🔄')
+              .fontSize(16)
+              .fontColor('#FF6B9D')
+              .onClick(async () => {
+                await this.loadUserData();
+              })
+          }
+          
+          Text('查看详情 >')
+            .fontSize(14)
+            .fontColor('#FF6B9D')
+        }
       }
       .width('100%')
       
       Row({ space: 12 }) {
-        ForEach(this.statsData, (item: StatsItem) => {
+        ForEach(this.isLoading ? this.statsData : this.realUserStats, (item: StatsItem) => {
           Column({ space: 8 }) {
             Text(item.icon)
               .fontSize(24)
-            Text(item.value)
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(item.color)
+              .opacity(this.isLoading ? 0.5 : 1)
+            if (this.isLoading) {
+              Column()
+                .width(40)
+                .height(20)
+                .backgroundColor('#F0F0F0')
+                .borderRadius(4)
+            } else {
+              Text(item.value)
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(item.color)
+            }
             Text(item.title)
               .fontSize(12)
               .fontColor('#666666')
+              .opacity(this.isLoading ? 0.5 : 1)
           }
           .width('25%')
           .height(80)
@@ -359,47 +523,83 @@ export struct Mine {
   // 构建会员特权横幅
   @Builder
   buildVipBanner() {
-    Row({ space: 16 }) {
-      Column({ space: 8 }) {
-        Text('👑')
-          .fontSize(32)
-        Text('开通会员')
-          .fontSize(14)
-          .fontColor('#FFFFFF')
-      }
-      
-      Column({ space: 4 }) {
-        Text('B站大会员')
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-        Text('专享特权，畅享无限精彩')
+    Column({ space: 12 }) {
+      Row({ space: 16 }) {
+        Column({ space: 4 }) {
+          Row({ space: 8 }) {
+            Text('👑')
+              .fontSize(20)
+            Text('哔哩哔哩大会员')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FFFFFF')
+          }
+          Text('专属特权，畅享无限精彩')
+            .fontSize(12)
+            .fontColor('#FFFFFF')
+            .opacity(0.9)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .layoutWeight(1)
+        
+        Button(this.bilibiliAuthInfo ? '续费会员' : '立即开通')
+          .width(80)
+          .height(32)
           .fontSize(12)
-          .fontColor('#FFFFFF')
-        Text('首月仅需 ¥9.9')
-          .fontSize(14)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFD700')
+          .backgroundColor('#FFFFFF')
+          .fontColor('#FF6B9D')
+          .borderRadius(16)
+          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
       
-      Button('立即开通')
-        .width(80)
-        .height(32)
-        .fontSize(12)
-        .backgroundColor('#FFFFFF')
-        .fontColor('#FF6B9D')
-        .borderRadius(16)
+      // 会员特权展示
+      Row({ space: 20 }) {
+        Column({ space: 4 }) {
+          Text('🎬')
+            .fontSize(16)
+          Text('专属内容')
+            .fontSize(10)
+            .fontColor('#FFFFFF')
+            .opacity(0.8)
+        }
+        
+        Column({ space: 4 }) {
+          Text('📱')
+            .fontSize(16)
+          Text('免广告')
+            .fontSize(10)
+            .fontColor('#FFFFFF')
+            .opacity(0.8)
+        }
+        
+        Column({ space: 4 }) {
+          Text('⚡')
+            .fontSize(16)
+          Text('高清画质')
+            .fontSize(10)
+            .fontColor('#FFFFFF')
+            .opacity(0.8)
+        }
+        
+        Column({ space: 4 }) {
+          Text('🎁')
+            .fontSize(16)
+          Text('专属福利')
+            .fontSize(10)
+            .fontColor('#FFFFFF')
+            .opacity(0.8)
+        }
+      }
+      .justifyContent(FlexAlign.SpaceAround)
+      .width('100%')
     }
     .width('100%')
-    .height(100)
-    .padding(20)
+    .padding(16)
     .backgroundColor('#FF6B9D')
     .borderRadius(16)
     .linearGradient({
       direction: GradientDirection.Right,
-      colors: [['#FF6B9D', 0.0], ['#FF8E9B', 1.0]]
+      colors: [['#FF6B9D', 0.0], ['#4ECDC4', 1.0]]
     })
     .shadow({ radius: 8, color: '#1A000000', offsetY: 4 })
     .margin({ top: 16 })

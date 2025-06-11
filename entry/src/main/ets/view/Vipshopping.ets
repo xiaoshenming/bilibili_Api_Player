@@ -18,7 +18,7 @@ interface ProductItem {
   originalPrice: string;
   tag: string;
 }
-
+@Entry
 @Component
 export struct Vipshopping {
   @State selectedTab: number = 0;
@@ -227,7 +227,7 @@ export struct Vipshopping {
         .borderRadius(12)
         .justifyContent(FlexAlign.Center)
         .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
-        
+
         // 免费配送
         Column({ space: 8 }) {
           Text('🚚')
@@ -350,97 +350,113 @@ export struct Vipshopping {
       }
       .width('100%')
       
-      Row({ space: 12 }) {
+      Flex({ direction: FlexDirection.Row, justifyContent: FlexAlign.SpaceBetween, wrap: FlexWrap.NoWrap }) {
         // 满减券
-        Row({ space: 12 }) {
+        Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center }) {
           Column() {
             Text('¥20')
-              .fontSize(20)
+              .fontSize(18)
               .fontWeight(FontWeight.Bold)
               .fontColor('#FFFFFF')
             Text('满100可用')
-              .fontSize(10)
+              .fontSize(9)
               .fontColor('#FFFFFF')
           }
-          .width(60)
-          .height(60)
+          .width(50)
+          .height(50)
           .backgroundColor('#FF6B9D')
           .borderRadius(8)
           .justifyContent(FlexAlign.Center)
           
-          Column({ space: 4 }) {
+          Column({ space: 2 }) {
             Text('满减券')
-              .fontSize(14)
+              .fontSize(13)
               .fontWeight(FontWeight.Medium)
               .fontColor('#333333')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
             Text('满100减20')
-              .fontSize(12)
+              .fontSize(11)
               .fontColor('#666666')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
             Text('有效期至12-31')
-              .fontSize(10)
+              .fontSize(9)
               .fontColor('#999999')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
           .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1)
+          .flexShrink(1)
+          .margin({ left: 8, right: 8 })
           
           Button('领取')
-            .width(50)
-            .height(28)
-            .fontSize(12)
+            .width(40)
+            .height(24)
+            .fontSize(10)
             .backgroundColor('#FF6B9D')
-            .borderRadius(14)
+            .borderRadius(12)
+            .flexShrink(0)
         }
-        .width('48%')
-        .height(80)
+        .flexBasis('48%')
+        .height(70)
         .backgroundColor('#FFFFFF')
         .borderRadius(12)
-        .padding(12)
+        .padding(10)
         .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         
         // 折扣券
-        Row({ space: 12 }) {
+        Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center }) {
           Column() {
             Text('9折')
-              .fontSize(18)
+              .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor('#FFFFFF')
             Text('无门槛')
-              .fontSize(10)
+              .fontSize(9)
               .fontColor('#FFFFFF')
           }
-          .width(60)
-          .height(60)
+          .width(50)
+          .height(50)
           .backgroundColor('#4ECDC4')
           .borderRadius(8)
           .justifyContent(FlexAlign.Center)
           
-          Column({ space: 4 }) {
+          Column({ space: 2 }) {
             Text('折扣券')
-              .fontSize(14)
+              .fontSize(13)
               .fontWeight(FontWeight.Medium)
               .fontColor('#333333')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
             Text('全场9折')
-              .fontSize(12)
+              .fontSize(11)
               .fontColor('#666666')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
             Text('有效期至12-31')
-              .fontSize(10)
+              .fontSize(9)
               .fontColor('#999999')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
           .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1)
+          .flexShrink(1)
+          .margin({ left: 8, right: 8 })
           
           Button('领取')
-            .width(50)
-            .height(28)
-            .fontSize(12)
+            .width(40)
+            .height(24)
+            .fontSize(10)
             .backgroundColor('#4ECDC4')
-            .borderRadius(14)
+            .borderRadius(12)
+            .flexShrink(0)
         }
-        .width('48%')
-        .height(80)
+        .flexBasis('48%')
+        .height(70)
         .backgroundColor('#FFFFFF')
         .borderRadius(12)
-        .padding(12)
+        .padding(10)
         .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
       }
       .width('100%')
