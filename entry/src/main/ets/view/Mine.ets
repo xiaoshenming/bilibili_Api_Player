@@ -420,41 +420,46 @@ export struct Mine {
       }
       .width('100%')
       
-      Row({ space: 12 }) {
+      Grid() {
         ForEach(this.isLoading ? this.statsData : this.realUserStats, (item: StatsItem) => {
-          Column({ space: 8 }) {
-            Text(item.icon)
-              .fontSize(24)
-              .opacity(this.isLoading ? 0.5 : 1)
-            if (this.isLoading) {
-              Column()
-                .width(40)
-                .height(20)
-                .backgroundColor('#F0F0F0')
-                .borderRadius(4)
-            } else {
-              Text(item.value)
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(item.color)
+          GridItem() {
+            Column({ space: 8 }) {
+              Text(item.icon)
+                .fontSize(24)
+                .opacity(this.isLoading ? 0.5 : 1)
+              if (this.isLoading) {
+                Column()
+                  .width(40)
+                  .height(20)
+                  .backgroundColor('#F0F0F0')
+                  .borderRadius(4)
+              } else {
+                Text(item.value)
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(item.color)
+              }
+              Text(item.title)
+                .fontSize(12)
+                .fontColor('#666666')
+                .opacity(this.isLoading ? 0.5 : 1)
             }
-            Text(item.title)
-              .fontSize(12)
-              .fontColor('#666666')
-              .opacity(this.isLoading ? 0.5 : 1)
+            .width('100%')
+            .height(80)
+            .backgroundColor('#FFFFFF')
+            .borderRadius(12)
+            .justifyContent(FlexAlign.Center)
+            .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
+            .onClick(() => {
+              // 点击统计项
+            })
           }
-          .width('25%')
-          .height(80)
-          .backgroundColor('#FFFFFF')
-          .borderRadius(12)
-          .justifyContent(FlexAlign.Center)
-          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
-          .onClick(() => {
-            // 点击统计项
-          })
         })
       }
+      .columnsTemplate('1fr 1fr 1fr 1fr')
+      .columnsGap(12)
       .width('100%')
+      .height(80)
     }
     .margin({ top: 16 })
   }
@@ -619,7 +624,7 @@ export struct Mine {
       .backgroundColor('#FFFFFF')
       .border({ width: 1, color: '#FF4757', radius: 24 })
       .enabled(!this.isLoggingOut)
-      .margin({ top: 24 })
+      .margin({ top: 24,bottom:24 })
       .onClick(() => {
         this.handleLogout();
       })

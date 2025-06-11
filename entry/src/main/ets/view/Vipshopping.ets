@@ -209,80 +209,91 @@ export struct Vipshopping {
       }
       .width('100%')
       
-      Row({ space: 12 }) {
+      Grid() {
         // 专享折扣
-        Column({ space: 8 }) {
-          Text('💎')
-            .fontSize(24)
-          Text('专享折扣')
-            .fontSize(14)
-            .fontColor('#333333')
-          Text('9折起')
-            .fontSize(12)
-            .fontColor('#FF6B9D')
+        GridItem() {
+          Column({ space: 8 }) {
+            Text('💎')
+              .fontSize(24)
+            Text('专享折扣')
+              .fontSize(14)
+              .fontColor('#333333')
+            Text('9折起')
+              .fontSize(12)
+              .fontColor('#FF6B9D')
+          }
+          .width('100%')
+          .height(80)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         }
-        .width('25%')
-        .height(80)
-        .backgroundColor('#FFFFFF')
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-        .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
 
         // 免费配送
-        Column({ space: 8 }) {
-          Text('🚚')
-            .fontSize(24)
-          Text('免费配送')
-            .fontSize(14)
-            .fontColor('#333333')
-          Text('包邮')
-            .fontSize(12)
-            .fontColor('#4ECDC4')
+        GridItem() {
+          Column({ space: 8 }) {
+            Text('🚚')
+              .fontSize(24)
+            Text('免费配送')
+              .fontSize(14)
+              .fontColor('#333333')
+            Text('包邮')
+              .fontSize(12)
+              .fontColor('#4ECDC4')
+          }
+          .width('100%')
+          .height(80)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         }
-        .width('25%')
-        .height(80)
-        .backgroundColor('#FFFFFF')
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-        .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         
         // 专属客服
-        Column({ space: 8 }) {
-          Text('👥')
-            .fontSize(24)
-          Text('专属客服')
-            .fontSize(14)
-            .fontColor('#333333')
-          Text('7x24h')
-            .fontSize(12)
-            .fontColor('#45B7D1')
+        GridItem() {
+          Column({ space: 8 }) {
+            Text('👥')
+              .fontSize(24)
+            Text('专属客服')
+              .fontSize(14)
+              .fontColor('#333333')
+            Text('7x24h')
+              .fontSize(12)
+              .fontColor('#45B7D1')
+          }
+          .width('100%')
+          .height(80)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         }
-        .width('25%')
-        .height(80)
-        .backgroundColor('#FFFFFF')
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-        .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         
         // 积分返还
-        Column({ space: 8 }) {
-          Text('⭐')
-            .fontSize(24)
-          Text('积分返还')
-            .fontSize(14)
-            .fontColor('#333333')
-          Text('双倍')
-            .fontSize(12)
-            .fontColor('#FFEAA7')
+        GridItem() {
+          Column({ space: 8 }) {
+            Text('⭐')
+              .fontSize(24)
+            Text('积分返还')
+              .fontSize(14)
+              .fontColor('#333333')
+            Text('双倍')
+              .fontSize(12)
+              .fontColor('#FFEAA7')
+          }
+          .width('100%')
+          .height(80)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
         }
-        .width('25%')
-        .height(80)
-        .backgroundColor('#FFFFFF')
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-        .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
       }
+      .columnsTemplate('1fr 1fr 1fr 1fr')
+      .columnsGap(12)
       .width('100%')
+      .height(80)
     }
     .margin({ top: 16 })
   }
